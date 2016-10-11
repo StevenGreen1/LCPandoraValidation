@@ -6,18 +6,17 @@
 SET( ILC_HOME "/afs/desy.de/project/ilcsoft/sw/x86_64_gcc44_sl6/v01-17-10" CACHE PATH "Path to ILC Software" FORCE)
 MARK_AS_ADVANCED( ILC_HOME )
 
-SET( LOCAL_ILC_HOME "/var/clus/usera/sg568/LCValidationPandora" CACHE PATH "Path to Local ILC Software" FORCE)
-MARK_AS_ADVANCED( LOCAL_ILC_HOME )
-
 SET( CMAKE_PREFIX_PATH 
 	${ILC_HOME}/lccd/v01-03-01;
 	${ILC_HOME}/Marlin/v01-09;
+	${ILC_HOME}/MarlinDD4hep/v00-02;
+	${ILC_HOME}/DDMarlinPandora/v00-04;
 	${ILC_HOME}/MarlinUtil/v01-12;
 	${ILC_HOME}/Mokka/mokka-08-05;
 	${ILC_HOME}/MarlinReco/v01-15;
-        ${LOCAL_ILC_HOME}/LCPandoraAnalysis;
-        ${LOCAL_ILC_HOME}/PandoraPFA;
-        ${LOCAL_ILC_HOME}/MarlinPandora;
+	${ILC_HOME}/PandoraAnalysis/v01-02-01;
+	${ILC_HOME}/PandoraPFANew/v02-09-00;
+	${ILC_HOME}/MarlinPandora/v02-04-00;
 	${ILC_HOME}/LCFIVertex/v00-07-02;
 	${ILC_HOME}/CEDViewer/v01-12;
 	${ILC_HOME}/Overlay/v00-15;
@@ -43,8 +42,11 @@ SET( CMAKE_PREFIX_PATH
 	${ILC_HOME}/KalDet/v01-13-03;
 	${ILC_HOME}/GBL/V01-17-01;
 	${ILC_HOME}/xercesc/3.1.2;
+	${ILC_HOME}/DD4hep/v00-16;
 	${ILC_HOME}/lcgeo/v00-08;
 	${ILC_HOME}/aidaTT/v00-04;
+	${ILC_HOME}/DDKalTest/v01-00;
+	${ILC_HOME}/DD4hepExamples/v00-16;
 	${ILC_HOME}/CED/v01-09-01;
 	${ILC_HOME}/lcio/v02-07-02;
 	${ILC_HOME}/gear/v01-06;
