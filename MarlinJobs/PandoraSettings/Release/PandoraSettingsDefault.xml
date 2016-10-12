@@ -15,6 +15,15 @@
 
     <!-- ALGORITHM SETTINGS -->
 
+    <algorithm type = "EventWriting">
+        <EventFileName>OutputEventPndrFile</EventFileName>
+        <GeometryFileName>OutputGeometryPndrFile</GeometryFileName>
+        <ShouldWriteEvents>true</ShouldWriteEvents>
+        <ShouldWriteGeometry>true</ShouldWriteGeometry>
+        <ShouldOverwriteEventFile>true</ShouldOverwriteEventFile>
+        <ShouldOverwriteGeometryFile>true</ShouldOverwriteGeometryFile>
+    </algorithm>
+
     <!-- Set calo hit properties, then select tracks and hits to use for clustering -->
     <algorithm type = "CaloHitPreparation"/>
     <algorithm type = "EventPreparation">
@@ -69,7 +78,7 @@
         <ClusterListName>PhotonClusters</ClusterListName>
         <ReplaceCurrentClusterList>false</ReplaceCurrentClusterList>
         <ShouldMakePdfHistograms>false</ShouldMakePdfHistograms>
-        <HistogramFile>PandoraLikelihoodData9EBin.xml</HistogramFile>
+        <HistogramFile>/var/clus/usera/sg568/LCValidationPandora/MarlinJobs/PandoraSettings/Release/PandoraLikelihoodData9EBin.xml</HistogramFile>
     </algorithm>
 
     <!-- Clustering parent algorithm runs a daughter clustering algorithm -->
