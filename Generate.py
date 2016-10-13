@@ -70,8 +70,7 @@ localPandoraSettingsDefaultFile.close()
 #########################
 # Make MarlinLocal.sh
 #########################
-marlinLocal = """
-#!/bin/bash
+marlinLocal = """#!/bin/bash
 gcc_config_version=4.8.1
 mpfr_config_version=3.1.2
 gmp_config_version=5.1.1
@@ -109,10 +108,9 @@ marlinLocalFile.close()
 os.system('chmod u+x MarlinJobs/Templates/MarlinLocal.sh')
 
 #########################
-# Make MarlinReference.sh
+# Make MarlinRelease.sh
 #########################
-marlinReference = """
-#!/bin/bash
+marlinRelease = """#!/bin/bash
 
 gcc_config_version=4.8.1
 mpfr_config_version=3.1.2
@@ -144,11 +142,11 @@ ls $ILCSOFT
 
 Marlin  $1
 """
-marlinReferenceFileName = os.path.join(cwd, 'MarlinJobs/Templates/MarlinReference.sh')
-marlinReferenceFile = open(marlinReferenceFileName, 'w')
-marlinReferenceFile.write(marlinReference)
-marlinReferenceFile.close()
-os.system('chmod u+x MarlinJobs/Templates/MarlinReference.sh')
+marlinReleaseFileName = os.path.join(cwd, 'MarlinJobs/Templates/MarlinRelease.sh')
+marlinReleaseFile = open(marlinReleaseFileName, 'w')
+marlinReleaseFile.write(marlinRelease)
+marlinReleaseFile.close()
+os.system('chmod u+x MarlinJobs/Templates/MarlinRelease.sh')
 
 #########################
 # Make MarlinTemplate.xml

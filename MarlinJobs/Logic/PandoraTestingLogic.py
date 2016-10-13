@@ -9,11 +9,11 @@ class ValidatingPandora:
 ### Start of constructor
 ### ----------------------------------------------------------------------------------------------------
 
-    def __init__(self, configFileName, slcioFormat, slcioPath, gearFile, outputPath):
+    def __init__(self, slcioFormat, slcioPath, gearFile, outputPath):
         cwd = os.getcwd()
 
         'Calibration File'
-        self.configFileName = configFileName
+        self.configFileName = os.path.join(cwd, 'Calibration/CalibConfig_DetModel38_RecoStage76.py')
         config = {}
         execfile(self.configFileName, config)
 
@@ -67,17 +67,17 @@ class ValidatingPandora:
 
         'Pandora Settings File'
         pandoraSettingsRelease = {}
-        pandoraSettingsRelease['Default'] = os.path.join(cwd, '../PandoraSettings/Release/PandoraSettingsDefault.xml')
-        pandoraSettingsRelease['PerfectPhoton'] = os.path.join(cwd, '../PandoraSettings/Release/PandoraSettingsPerfectPhoton.xml')
-        pandoraSettingsRelease['PerfectPhotonNeutronK0L'] = os.path.join(cwd, '../PandoraSettings/Release/PandoraSettingsPerfectPhotonNeutronK0L.xml')
-        pandoraSettingsRelease['PerfectPFA'] = os.path.join(cwd, '../PandoraSettings/Release/PandoraSettingsPerfectPFA.xml')
+        pandoraSettingsRelease['Default'] = os.path.join(cwd, 'PandoraSettings/Release/PandoraSettingsDefault.xml')
+        pandoraSettingsRelease['PerfectPhoton'] = os.path.join(cwd, 'PandoraSettings/Release/PandoraSettingsPerfectPhoton.xml')
+        pandoraSettingsRelease['PerfectPhotonNeutronK0L'] = os.path.join(cwd, 'PandoraSettings/Release/PandoraSettingsPerfectPhotonNeutronK0L.xml')
+        pandoraSettingsRelease['PerfectPFA'] = os.path.join(cwd, 'PandoraSettings/Release/PandoraSettingsPerfectPFA.xml')
         self._PandoraSettingsFileRelease = pandoraSettingsRelease
 
         pandoraSettingsLocal = {}
-        pandoraSettingsLocal['Default'] = os.path.join(cwd, '../PandoraSettings/Local/PandoraSettingsDefault.xml')
-        pandoraSettingsLocal['PerfectPhoton'] = os.path.join(cwd, '../PandoraSettings/Local/PandoraSettingsPerfectPhoton.xml')
-        pandoraSettingsLocal['PerfectPhotonNeutronK0L'] = os.path.join(cwd, '../PandoraSettings/Local/PandoraSettingsPerfectPhotonNeutronK0L.xml')
-        pandoraSettingsLocal['PerfectPFA'] = os.path.join(cwd, '../PandoraSettings/Local/PandoraSettingsPerfectPFA.xml')
+        pandoraSettingsLocal['Default'] = os.path.join(cwd, 'PandoraSettings/Local/PandoraSettingsDefault.xml')
+        pandoraSettingsLocal['PerfectPhoton'] = os.path.join(cwd, 'PandoraSettings/Local/PandoraSettingsPerfectPhoton.xml')
+        pandoraSettingsLocal['PerfectPhotonNeutronK0L'] = os.path.join(cwd, 'PandoraSettings/Local/PandoraSettingsPerfectPhotonNeutronK0L.xml')
+        pandoraSettingsLocal['PerfectPFA'] = os.path.join(cwd, 'PandoraSettings/Local/PandoraSettingsPerfectPFA.xml')
         self._PandoraSettingsFileLocal = pandoraSettingsLocal
 
         'Realistic Digitisation'
@@ -134,7 +134,7 @@ class ValidatingPandora:
         self._UseCondor = True
         self._CondorRunListRelease = []
         self._CondorRunListLocal = []
-        self._CondorMaxRuns = 500
+        self._CondorMaxRuns = 1
 
         'Random String For Job Submission'
         self._RandomString = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
@@ -220,7 +220,7 @@ class ValidatingPandora:
 
             basePandoraSettingsReleaseContent = {}
             for key, value in self._PandoraSettingsFileRelease.iteritems():
-                basePandoraSettingsRelease = open(self._PandoraSettingsFileRelease,'r')
+                basePandoraSettingsRelease = open(value,'r')
                 basePandoraSettingsReleaseContent[key] = basePandoraSettingsRelease.read()
                 basePandoraSettingsRelease.close()
 
@@ -298,7 +298,6 @@ class ValidatingPandora:
                 ###################################
                 # Create the Pandora Settings Files
                 ###################################
-                basePandoraSettingsReleaseContent = {}
                 for key, value in basePandoraSettingsReleaseContent.iteritems():
                     outputEventPndrFileNameRelease = 'Validating_Release_PandoraSettings' + key + '_Event_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
                     outputGeometryPndrFileNameRelease = 'Validating_Release_PandoraSettings' + key + '_Geometry_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
@@ -319,7 +318,6 @@ class ValidatingPandora:
                     releasePandoraSettingsFile.writelines(content)
                     releasePandoraSettingsFile.close()
 
-                basePandoraSettingsLocalContent = {}
                 for key, value in basePandoraSettingsLocalContent.iteritems():
                     outputEventPndrFileNameLocal = 'Validating_Local_PandoraSettings' + key + '_Event_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
                     outputGeometryPndrFileNameLocal = 'Validating_Local_PandoraSettings' + key + '_Geometry_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
@@ -344,8 +342,8 @@ class ValidatingPandora:
                 self._CondorRunListLocal.append(xmlFullPathLocal)
 
         self.logger.debug('The current list of xml files to process is: ')
-        self.logger.debug(self._CondorRunListRelease)
-        self.logger.debug(self._CondorRunListLocal)
+#        self.logger.debug(self._CondorRunListRelease)
+#        self.logger.debug(self._CondorRunListLocal)
 
 ### ----------------------------------------------------------------------------------------------------
 ### End of prepareSteeringFiles function
@@ -655,6 +653,9 @@ class ValidatingPandora:
                 for idx, fileToRun in enumerate(condorRunList):
                     nRemaining = len(condorRunList) - idx - 1
                     nQueued = self.nQueuedCondorJobs(marlinExecutable)
+                    while nQueued >= self._CondorMaxRuns:
+                        subprocess.call(["usleep", "500000"])
+                        nQueued = self.nQueuedCondorJobs(marlinExecutable)
 
                     with open(condorJobFile, 'w') as jobFile:
                         jobString = self.getCondorJobString(marlinExecutable)
