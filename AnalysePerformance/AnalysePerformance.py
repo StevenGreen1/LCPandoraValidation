@@ -4,8 +4,8 @@
 import subprocess, os, sys
 
 inputRootFolder = sys.argv[1]
-localBinary = #LocalBinary#
-releasedBinary = #ReleaseBinary#
+localBinary = '#LocalBinary#'
+releasedBinary = '#ReleaseBinary#'
 
 results = ''
 for setting in ['Local', 'Release']:
