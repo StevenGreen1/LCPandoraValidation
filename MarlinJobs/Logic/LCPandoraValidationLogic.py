@@ -313,7 +313,7 @@ class LCPandoraValidationLogic:
         <ShouldOverwriteGeometryFile>true</ShouldOverwriteGeometryFile>
     </algorithm>
 """
-                    content = re.sub('</pandora>', eventWritingString + '</pandora>', value)
+                    content = re.sub('<!-- ALGORITHM SETTINGS -->', '<!-- ALGORITHM SETTINGS --> \n' + eventWritingString, value)
                     releasePandoraSettingsFile = open(pandoraSettingsFullPathRelease[key], 'w')
                     releasePandoraSettingsFile.writelines(content)
                     releasePandoraSettingsFile.close()
@@ -333,7 +333,6 @@ class LCPandoraValidationLogic:
         <ShouldOverwriteGeometryFile>true</ShouldOverwriteGeometryFile>
     </algorithm>
 """
-
                     content = re.sub('<!-- ALGORITHM SETTINGS -->', '<!-- ALGORITHM SETTINGS --> \n' + eventWritingString, value)
                     releasePandoraSettingsFile = open(pandoraSettingsFullPathLocal[key], 'w')
                     releasePandoraSettingsFile.writelines(content)
