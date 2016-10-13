@@ -2,73 +2,7 @@ import os
 import re
 import sys
 
-print """
-To run the validation script please do the following
-1) Copy the init_ilcsoft.sh and ILCSoft.cmake scripts from your choice of ilcsoft builds to this directory.  Please use a build with gcc48 at least.  Default script in directory is from ilcsoft v01-17-09
-2) Run 'python initalise.py' to generate init_ilcsoft_local.sh and ILCSoft_Local.cmake, make the marlin executables and get the marlin template from svn
-3) Build PandoraPFA (with LCContent), MarlinPandora and LCPandoraAnalysis in this directory using ILCSoft_Local.cmake for MarlinPandora and LCPandoraAnalysis
-4) Modify paths in MarlinJobs/Validate.py and run 'python Validate.py'
-"""
-
-#########################
-# Edit init_ilcsoft.sh
-#########################
-
-releaseMarlinPandora = ''
-lines = [line.rstrip('\n') for line in open('init_ilcsoft.sh')]
-newContent = ''
 cwd = os.getcwd()
-for line in lines:
-    if 'MarlinPandora' in line:
-        newline = ''
-        for subline in line.split(':'):
-            if 'export' in subline:
-                newline += 'export MARLIN_DLL="'
-            if 'libPandoraAnalysis' in subline:
-                newline += os.path.join(cwd,'LCPandoraAnalysis/lib/libPandoraAnalysis.so:')
-            elif 'libMarlinPandora' in subline:
-                releaseMarlinPandora = subline
-                newline += os.path.join(cwd,'MarlinPandora/lib/libMarlinPandora.so:')
-            elif 'libDDMarlinPandora' in subline:
-                newline += ''
-            elif 'libMarlinDD4hep.so' in subline:
-                newline += ''
-            elif '$MARLIN_DLL' in subline:
-                newline += subline  
-            else:
-                newline += subline + ':'
-        line = newline
-    newContent += line + '\n'
-releaseMarlinPandoraScriptsFolder = os.path.join(os.path.dirname(releaseMarlinPandora),'../scripts')
-
-newInitFile = open("init_ilcsoft_local.sh", "w")
-newInitFile.write(newContent)
-newInitFile.close()
-
-#########################
-# Edit ILCSoft.cmake
-#########################
-lines = [line.rstrip('\n') for line in open('ILCSoft.cmake')]
-newContent = ''
-cwdString  = '"' + cwd + '"'
-for line in lines:
-    if 'MARK_AS_ADVANCED' in line:
-        line = """MARK_AS_ADVANCED( ILC_HOME )
-SET( LOCAL_ILC_HOME """ + cwdString + """ CACHE PATH "Path to Local ILC Software" FORCE)
-MARK_AS_ADVANCED( LOCAL_ILC_HOME )"""
-    elif 'DD' in line:
-        continue
-    elif 'PandoraAnalysis' in line:
-        line = '        ${LOCAL_ILC_HOME}/LCPandoraAnalysis;'
-    elif 'MarlinPandora' in line:
-        line = '        ${LOCAL_ILC_HOME}/MarlinPandora;'
-    elif 'PandoraPFA' in line:
-        line = '        ${LOCAL_ILC_HOME}/PandoraPFA;'
-
-    newContent += line + '\n'
-newIlcSoftFile = open("ILCSoft_Local.cmake", "w")
-newIlcSoftFile.write(newContent)
-newIlcSoftFile.close()
 
 #########################
 # Make Templates Folder
@@ -80,38 +14,57 @@ if not os.path.exists(templatesFolder):
 #########################
 # Get Release Pandora Settings
 #########################
+releaseMarlinPandora = ''
+lines = [line.rstrip('\n') for line in open('init_ilcsoft.sh')]
+newContent = ''
+cwd = os.getcwd()
+for line in lines:
+    if 'MarlinPandora' in line:
+        newline = ''
+        for subline in line.split(':'):
+            if 'libMarlinPandora' in subline:
+                releaseMarlinPandora = subline
+releaseMarlinPandoraScriptsFolder = os.path.join(os.path.dirname(releaseMarlinPandora),'../scripts')
+
 pandoraSettingsReleaseFolder = os.path.join(cwd, 'MarlinJobs/PandoraSettings/Release')
+if not os.path.exists(pandoraSettingsReleaseFolder):
+    os.makedirs(pandoraSettingsReleaseFolder)
+
 os.system('cp ' + releaseMarlinPandoraScriptsFolder + '/* ' + pandoraSettingsReleaseFolder)
 releasePandoraSettingsDefault = os.path.join(pandoraSettingsReleaseFolder, 'PandoraSettingsDefault.xml')
 releasePandoraSettingsLikelihoodData = os.path.join(pandoraSettingsReleaseFolder, 'PandoraLikelihoodData9EBin.xml')
 
 releasePandoraSettingsDefaultFile = open(releasePandoraSettingsDefault, 'r')
-content = releasePandoraSettingsDefaultFile.readlines()
+content = releasePandoraSettingsDefaultFile.read()
 releasePandoraSettingsDefaultFile.close()
 
+print releasePandoraSettingsLikelihoodData
 content = re.sub('PandoraLikelihoodData9EBin.xml', releasePandoraSettingsLikelihoodData, content)
 
 releasePandoraSettingsDefaultFile = open(releasePandoraSettingsDefault, 'w')
-releasePandoraSettingsDefaultFile.writelines(content)
+releasePandoraSettingsDefaultFile.write(content)
 releasePandoraSettingsDefaultFile.close()
 
 #########################
 # Get Local Pandora Settings
 #########################
 pandoraSettingsLocalFolder = os.path.join(cwd, 'MarlinJobs/PandoraSettings/Local')
-localMarlinPandoraScriptsFolder = os.path.join(cwd, 'MarlinPandora/scripts'
+if not os.path.exists(pandoraSettingsLocalFolder):
+    os.makedirs(pandoraSettingsLocalFolder)
+
+localMarlinPandoraScriptsFolder = os.path.join(cwd, 'MarlinPandora/scripts')
 os.system('cp ' + localMarlinPandoraScriptsFolder + '/* ' + pandoraSettingsLocalFolder)
 localPandoraSettingsDefault = os.path.join(pandoraSettingsLocalFolder, 'PandoraSettingsDefault.xml')
 localPandoraSettingsLikelihoodData = os.path.join(pandoraSettingsLocalFolder, 'PandoraLikelihoodData9EBin.xml')
 
 localPandoraSettingsDefaultFile = open(localPandoraSettingsDefault, 'r')
-content = localPandoraSettingsDefaultFile.readlines()
+content = localPandoraSettingsDefaultFile.read()
 localPandoraSettingsDefaultFile.close()
 
 content = re.sub('PandoraLikelihoodData9EBin.xml', localPandoraSettingsLikelihoodData, content)
 
 localPandoraSettingsDefaultFile = open(localPandoraSettingsDefault, 'w')
-localPandoraSettingsDefaultFile.writelines(content)
+localPandoraSettingsDefaultFile.write(content)
 localPandoraSettingsDefaultFile.close()
 
 #########################
@@ -151,7 +104,7 @@ Marlin  $1
 """
 marlinLocalFileName = os.path.join(cwd, 'MarlinJobs/Templates/MarlinLocal.sh')
 marlinLocalFile = open(marlinLocalFileName, 'w')
-marlinLocalFile.write(marlinLocalFileName)
+marlinLocalFile.write(marlinLocal)
 marlinLocalFile.close()
 os.system('chmod u+x MarlinJobs/Templates/MarlinLocal.sh')
 
@@ -193,7 +146,7 @@ Marlin  $1
 """
 marlinReferenceFileName = os.path.join(cwd, 'MarlinJobs/Templates/MarlinReference.sh')
 marlinReferenceFile = open(marlinReferenceFileName, 'w')
-marlinReferenceFile.write(marlinReferenceFileName)
+marlinReferenceFile.write(marlinReference)
 marlinReferenceFile.close()
 os.system('chmod u+x MarlinJobs/Templates/MarlinReference.sh')
 
