@@ -2,8 +2,8 @@
 
 import os, sys, getopt, re, subprocess, math, dircache, logging, time, random, string
 
-class ValidatingPandora:
-    'Common base class for all validating pandora process'
+class LCPandoraValidationLogic:
+    'Common base class for validating LC Pandora software.'
 
 ### ----------------------------------------------------------------------------------------------------
 ### Start of constructor
@@ -333,7 +333,8 @@ class ValidatingPandora:
         <ShouldOverwriteGeometryFile>true</ShouldOverwriteGeometryFile>
     </algorithm>
 """
-                    content = re.sub('</pandora>', eventWritingString + '</pandora>', value)
+
+                    content = re.sub('<!-- ALGORITHM SETTINGS -->', '<!-- ALGORITHM SETTINGS --> \n' + eventWritingString, value)
                     releasePandoraSettingsFile = open(pandoraSettingsFullPathLocal[key], 'w')
                     releasePandoraSettingsFile.writelines(content)
                     releasePandoraSettingsFile.close()
