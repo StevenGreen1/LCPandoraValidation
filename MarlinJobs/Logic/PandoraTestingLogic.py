@@ -9,7 +9,9 @@ class ValidatingPandora:
 ### Start of constructor
 ### ----------------------------------------------------------------------------------------------------
 
-    def __init__(self, configFileName, slcioFormat, slcioPath, gearFile, pandoraSettingsLocal, pandoraSettingsRelease, outputPath):
+    def __init__(self, configFileName, slcioFormat, slcioPath, gearFile, outputPath):
+        cwd = os.getcwd()
+
         'Calibration File'
         self.configFileName = configFileName
         config = {}
@@ -64,18 +66,19 @@ class ValidatingPandora:
         self._GearFile = gearFile
 
         'Pandora Settings File'
-        if not os.path.isfile(pandoraSettingsLocal):
-            self.logger.error('Pandora settings file does not exist!  Exiting.')
-            self.logger.error('Pandora settings file : ' + pandoraSettingsLocal)
-            sys.exit()
-
-        if not os.path.isfile(pandoraSettingsRelease):
-            self.logger.error('Pandora settings file does not exist!  Exiting.')
-            self.logger.error('Pandora settings file : ' + pandoraSettingsRelease)
-            sys.exit()
-
-        self._PandoraSettingsFileLocal = pandoraSettingsLocal
+        pandoraSettingsRelease = {}
+        pandoraSettingsRelease['Default'] = os.path.join(cwd, '../PandoraSettings/Release/PandoraSettingsDefault.xml')
+        pandoraSettingsRelease['PerfectPhoton'] = os.path.join(cwd, '../PandoraSettings/Release/PandoraSettingsPerfectPhoton.xml')
+        pandoraSettingsRelease['PerfectPhotonNeutronK0L'] = os.path.join(cwd, '../PandoraSettings/Release/PandoraSettingsPerfectPhotonNeutronK0L.xml')
+        pandoraSettingsRelease['PerfectPFA'] = os.path.join(cwd, '../PandoraSettings/Release/PandoraSettingsPerfectPFA.xml')
         self._PandoraSettingsFileRelease = pandoraSettingsRelease
+
+        pandoraSettingsLocal = {}
+        pandoraSettingsLocal['Default'] = os.path.join(cwd, '../PandoraSettings/Local/PandoraSettingsDefault.xml')
+        pandoraSettingsLocal['PerfectPhoton'] = os.path.join(cwd, '../PandoraSettings/Local/PandoraSettingsPerfectPhoton.xml')
+        pandoraSettingsLocal['PerfectPhotonNeutronK0L'] = os.path.join(cwd, '../PandoraSettings/Local/PandoraSettingsPerfectPhotonNeutronK0L.xml')
+        pandoraSettingsLocal['PerfectPFA'] = os.path.join(cwd, '../PandoraSettings/Local/PandoraSettingsPerfectPFA.xml')
+        self._PandoraSettingsFileLocal = pandoraSettingsLocal
 
         'Realistic Digitisation'
         self._RealisticDigitisation = config['RealisticDigitisation']
@@ -215,13 +218,17 @@ class ValidatingPandora:
             baseContent = base.read()
             base.close()
 
-            basePandoraSettingsLocal = open(self._PandoraSettingsFileLocal,'r')
-            basePandoraSettingsLocalContent = basePandoraSettingsLocal.read()
-            basePandoraSettingsLocal.close()
+            basePandoraSettingsReleaseContent = {}
+            for key, value in self._PandoraSettingsFileRelease.iteritems():
+                basePandoraSettingsRelease = open(self._PandoraSettingsFileRelease,'r')
+                basePandoraSettingsReleaseContent[key] = basePandoraSettingsRelease.read()
+                basePandoraSettingsRelease.close()
 
-            basePandoraSettingsRelease = open(self._PandoraSettingsFileRelease,'r')
-            basePandoraSettingsReleaseContent = basePandoraSettingsRelease.read()
-            basePandoraSettingsRelease.close()
+            basePandoraSettingsLocalContent = {}
+            for key, value in self._PandoraSettingsFileLocal.iteritems():
+                basePandoraSettingsLocal = open(value,'r')
+                basePandoraSettingsLocalContent[key] = basePandoraSettingsLocal.read()
+                basePandoraSettingsLocal.close()
 
             slcioFiles = []
             slcioFiles = list(self._SlcioFiles)
@@ -245,58 +252,93 @@ class ValidatingPandora:
 
                 slcioFileName = os.path.join(self._SlcioPath,nextFile)
 
+                ###################################
+                # Create the Marlin Steering Files
+                ###################################
                 xmlFileNameRelease = 'Validating_Release_Pandora_' + jobName + '_Job_Number_' + str(counter) + '.xml'
                 xmlFileNameLocal = 'Validating_Local_Pandora_' + jobName + '_Job_Number_' + str(counter) + '.xml'
                 xmlFullPathRelease = os.path.join(self._MarlinXmlPath, xmlFileNameRelease)
                 xmlFullPathLocal = os.path.join(self._MarlinXmlPath, xmlFileNameLocal)
 
-                pandoraSettingsFileNameRelease = 'PandoraSettingsDefault_Release_' + jobName + '_Job_Number_' + str(counter) + '.xml'
-                pandoraSettingsFileNameLocal = 'PandoraSettingsDefault_Local_' + jobName + '_Job_Number_' + str(counter) + '.xml'
-                pandoraSettingsFullPathRelease = os.path.join(self._PandoraSettingsPath, pandoraSettingsFileNameRelease)
-                pandoraSettingsFullPathLocal = os.path.join(self._PandoraSettingsPath, pandoraSettingsFileNameLocal)
-
-                rootFileFileNameRelease = 'Validating_Release_Pandora_' + jobName + '_Job_Number_' + str(counter) + '.root'
-                rootFileFileNameLocal = 'Validating_Local_Pandora_' + jobName + '_Job_Number_' + str(counter) + '.root'
-                rootFileFullPathRelease = os.path.join(self._RootFileFolder, rootFileFileNameRelease)
-                rootFileFullPathLocal = os.path.join(self._RootFileFolder, rootFileFileNameLocal)
-
                 marlinTemplate = re.sub('LcioInputFile',slcioFileName,marlinTemplate)                                 # Slcio File
                 marlinTemplate = re.sub('GearFile',self._GearFile,marlinTemplate)                                     # Gear File
 
-                marlinTemplateRelease = self.writeXmlFile(marlinTemplate, pandoraSettingsFullPathRelease)            # Calibration Parameters
-                marlinTemplateRelease = re.sub('PfoAnalysisRootFile',rootFileFullPathRelease,marlinTemplateRelease)   # PfoAnalysis Root File
+                pandoraSettingsFullPathRelease = {}
+                rootFileFullPathRelease = {}
+                for key, value in self._PandoraSettingsFileRelease.iteritems():
+                    pandoraSettingsFileNameRelease = 'PandoraSettings' + key + '_Release_' + jobName + '_Job_Number_' + str(counter) + '.xml'
+                    pandoraSettingsFullPathRelease[key] = os.path.join(self._PandoraSettingsPath, pandoraSettingsFileNameRelease)
+                    rootFileFileNameRelease = 'Validating_Release_PandoraSettings' + key + '_' + jobName + '_Job_Number_' + str(counter) + '.root'
+                    rootFileFullPathRelease[key] = os.path.join(self._RootFileFolder, rootFileFileNameRelease)
+
+                marlinTemplateRelease = self.writeXmlFile(marlinTemplate, pandoraSettingsFullPathRelease)             # Calibration Parameters
+                for key, value in rootFileFullPathRelease.iteritems():
+                    marlinTemplateRelease = re.sub(key + 'PfoAnalysisRootFile', value, marlinTemplateRelease)         # PfoAnalysis Root File
+
                 file = open(xmlFullPathRelease,'w')
                 file.write(marlinTemplateRelease)
                 file.close()
 
-                marlinTemplateLocal = self.writeXmlFile(marlinTemplate, pandoraSettingsFullPathLocal)                # Calibration Parameters
-                marlinTemplateLocal = re.sub('PfoAnalysisRootFile',rootFileFullPathLocal,marlinTemplateLocal)         # PfoAnalysis Root File
+                pandoraSettingsFullPathLocal = {}
+                rootFileFullPathLocal = {}
+                for key, value in self._PandoraSettingsFileLocal.iteritems():
+                    pandoraSettingsFileNameLocal = 'PandoraSettings' + key + '_Local_' + jobName + '_Job_Number_' + str(counter) + '.xml'
+                    pandoraSettingsFullPathLocal[key] = os.path.join(self._PandoraSettingsPath, pandoraSettingsFileNameLocal)
+                    rootFileFileNameLocal = 'Validating_Local_PandoraSettings' + key + '_' + jobName + '_Job_Number_' + str(counter) + '.root'
+                    rootFileFullPathLocal[key] = os.path.join(self._RootFileFolder, rootFileFileNameLocal)
+
+                marlinTemplateLocal = self.writeXmlFile(marlinTemplate, pandoraSettingsFullPathLocal)                 # Calibration Parameters
+                for key, value in rootFileFullPathLocal.iteritems():
+                    marlinTemplateLocal = re.sub(key + 'PfoAnalysisRootFile', value, marlinTemplateLocal)             # PfoAnalysis Root File
+
                 file = open(xmlFullPathLocal,'w')
                 file.write(marlinTemplateLocal)
                 file.close()
 
-                outputEventPndrFileNameRelease = 'Validating_Release_Pandora_Event_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
-                outputGeometryPndrFileNameRelease = 'Validating_Release_Pandora_Geometry_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
-                outputEventPndrFileNameLocal = 'Validating_Local_Pandora_Event_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
-                outputGeometryPndrFileNameLocal = 'Validating_Local_Pandora_Geometry_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
-                outputEventPndrFullPathRelease = os.path.join(self._PndrPath, outputEventPndrFileNameRelease)
-                outputGeometryPndrFullPathRelease = os.path.join(self._PndrPath, outputGeometryPndrFileNameRelease)
-                outputEventPndrFullPathLocal = os.path.join(self._PndrPath, outputEventPndrFileNameLocal)
-                outputGeometryPndrFullPathLocal = os.path.join(self._PndrPath, outputGeometryPndrFileNameLocal)
+                ###################################
+                # Create the Pandora Settings Files
+                ###################################
+                basePandoraSettingsReleaseContent = {}
+                for key, value in basePandoraSettingsReleaseContent.iteritems():
+                    outputEventPndrFileNameRelease = 'Validating_Release_PandoraSettings' + key + '_Event_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
+                    outputGeometryPndrFileNameRelease = 'Validating_Release_PandoraSettings' + key + '_Geometry_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
+                    outputEventPndrFullPathRelease = os.path.join(self._PndrPath, outputEventPndrFileNameRelease)
+                    outputGeometryPndrFullPathRelease = os.path.join(self._PndrPath, outputGeometryPndrFileNameRelease)
+                    eventWritingString = """
+    <algorithm type = "EventWriting">
+        <EventFileName>""" + outputEventPndrFullPathRelease + """</EventFileName>
+        <GeometryFileName>""" + outputGeometryPndrFullPathRelease + """</GeometryFileName>
+        <ShouldWriteEvents>true</ShouldWriteEvents>
+        <ShouldWriteGeometry>true</ShouldWriteGeometry>
+        <ShouldOverwriteEventFile>true</ShouldOverwriteEventFile>
+        <ShouldOverwriteGeometryFile>true</ShouldOverwriteGeometryFile>
+    </algorithm>
+"""
+                    content = re.sub('</pandora>', eventWritingString + '</pandora>', value)
+                    releasePandoraSettingsFile = open(pandoraSettingsFullPathRelease[key], 'w')
+                    releasePandoraSettingsFile.writelines(content)
+                    releasePandoraSettingsFile.close()
 
-                pandoraSettingsReleaseTemplate = basePandoraSettingsReleaseContent
-                pandoraSettingsReleaseTemplate = re.sub('OutputEventPndrFile', outputEventPndrFullPathRelease, pandoraSettingsReleaseTemplate)
-                pandoraSettingsReleaseTemplate = re.sub('OutputGeometryPndrFile', outputGeometryPndrFullPathRelease, pandoraSettingsReleaseTemplate)
-                file = open(pandoraSettingsFullPathRelease,'w')
-                file.write(pandoraSettingsReleaseTemplate)
-                file.close()
-
-                pandoraSettingsLocalTemplate = basePandoraSettingsLocalContent
-                pandoraSettingsLocalTemplate = re.sub('OutputEventPndrFile', outputEventPndrFullPathLocal, pandoraSettingsLocalTemplate)
-                pandoraSettingsLocalTemplate = re.sub('OutputGeometryPndrFile', outputGeometryPndrFullPathLocal, pandoraSettingsLocalTemplate)
-                file = open(pandoraSettingsFullPathLocal,'w')
-                file.write(pandoraSettingsLocalTemplate)
-                file.close()
+                basePandoraSettingsLocalContent = {}
+                for key, value in basePandoraSettingsLocalContent.iteritems():
+                    outputEventPndrFileNameLocal = 'Validating_Local_PandoraSettings' + key + '_Event_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
+                    outputGeometryPndrFileNameLocal = 'Validating_Local_PandoraSettings' + key + '_Geometry_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
+                    outputEventPndrFullPathLocal = os.path.join(self._PndrPath, outputEventPndrFileNameLocal)
+                    outputGeometryPndrFullPathLocal = os.path.join(self._PndrPath, outputGeometryPndrFileNameLocal)
+                    eventWritingString = """
+    <algorithm type = "EventWriting">
+        <EventFileName>""" + outputEventPndrFullPathLocal + """</EventFileName>
+        <GeometryFileName>""" + outputGeometryPndrFullPathLocal + """</GeometryFileName>
+        <ShouldWriteEvents>true</ShouldWriteEvents>
+        <ShouldWriteGeometry>true</ShouldWriteGeometry>
+        <ShouldOverwriteEventFile>true</ShouldOverwriteEventFile>
+        <ShouldOverwriteGeometryFile>true</ShouldOverwriteGeometryFile>
+    </algorithm>
+"""
+                    content = re.sub('</pandora>', eventWritingString + '</pandora>', value)
+                    releasePandoraSettingsFile = open(pandoraSettingsFullPathLocal[key], 'w')
+                    releasePandoraSettingsFile.writelines(content)
+                    releasePandoraSettingsFile.close()
 
                 self._CondorRunListRelease.append(xmlFullPathRelease)
                 self._CondorRunListLocal.append(xmlFullPathLocal)
@@ -319,7 +361,7 @@ class ValidatingPandora:
         simpleMuonDigiHeader = self.writeSimpleMuonDigiXmlHeader()
         template = re.sub('SimpleMuonDigiHeader',simpleMuonDigiHeader,template)
 
-        pandoraHeader = self.writePandoraXmlHeader()
+        pandoraHeader = self.writePandoraXmlHeader(pandoraSettingsFile)
         template = re.sub('PandoraHeader',pandoraHeader,template)
 
         digitiserImplementation = self.writeILDCaloDigiSiECalXml()
@@ -330,7 +372,7 @@ class ValidatingPandora:
 
         pandoraImplementation = self.writeMarlinPandoraSiECalXml(pandoraSettingsFile)
         pandoraImplementation += '\n'
-        pandoraImplementation += self.writePandoraAnalsisSiECalXml()
+        pandoraImplementation += self.writePandoraAnalsisSiECalXml(pandoraSettingsFile)
         template = re.sub('PandoraImplementation',pandoraImplementation,template)
         return template
 
@@ -481,11 +523,13 @@ class ValidatingPandora:
 ### Start of writeMarlinPandoraXmlHeader function
 ### ----------------------------------------------------------------------------------------------------
 
-    def writePandoraXmlHeader(self):
+    def writePandoraXmlHeader(self, pandoraSettingsFile):
         self.logger.debug('Writing MarlinPandora and PfoAnalysis xml header block.')
-        headerString = """
-<processor name="MyMarlinPandoraDefault"/>
-<processor name="MyPfoAnalysisDefault"/>"""
+        headerString = ''
+        for key, value in pandoraSettingsFile.iteritems():
+            headerString += """
+<processor name="MyMarlinPandora""" + key + """"/>
+<processor name="MyPfoAnalysis""" + key + """"/>"""
         return headerString
 
 ### ----------------------------------------------------------------------------------------------------
@@ -494,11 +538,13 @@ class ValidatingPandora:
 ### Start of writeMarlinPandoraSiECalXml function
 ### ----------------------------------------------------------------------------------------------------
 
-    def writeMarlinPandoraSiECalXml(self,pandoraSettingsFile):
+    def writeMarlinPandoraSiECalXml(self, pandoraSettingsFile):
         self.logger.debug('Writing MarlinPandora xml block for Si ECal.')
-        marlinPandoraTemplate  = """
-<processor name="MyMarlinPandoraDefault" type="PandoraPFANewProcessor">
-  <parameter name="PandoraSettingsXmlFile" type="String">""" + pandoraSettingsFile + """</parameter>
+        marlinPandoraTemplate = ''
+        for key, value in pandoraSettingsFile.iteritems():
+            marlinPandoraTemplate += """
+<processor name="MyMarlinPandora""" + key + """" type="PandoraPFANewProcessor">
+  <parameter name="PandoraSettingsXmlFile" type="String">""" + value + """</parameter>
   <!-- Collection names -->
   <parameter name="TrackCollections" type="StringVec">MarlinTrkTracks</parameter>
   <parameter name="ECalCaloHitCollections" type="StringVec">ECALBarrel ECALEndcap ECALOther</parameter>
@@ -513,9 +559,9 @@ class ValidatingPandora:
   <parameter name="ProngVertexCollections" type="StringVec">ProngVertices</parameter>
   <parameter name="SplitVertexCollections" type="StringVec">SplitVertices</parameter>
   <parameter name="V0VertexCollections" type="StringVec">V0Vertices</parameter>
-  <parameter name="ClusterCollectionName" type="String">PandoraClustersDefault</parameter>
-  <parameter name="PFOCollectionName" type="String">PandoraPFOsDefault</parameter>
-  <parameter name="StartVertexCollectionName" type="String">StartVerticesDefault</parameter>
+  <parameter name="ClusterCollectionName" type="String">PandoraClusters""" + key + """</parameter>
+  <parameter name="PFOCollectionName" type="String">PandoraPFOs""" + key + """</parameter>
+  <parameter name="StartVertexCollectionName" type="String">StartVertices""" + key + """</parameter>
   <!-- Calibration constants -->
   <parameter name="ECalToMipCalibration" type="float">""" + str(self._ECalGeVToMIP) + """</parameter>
   <parameter name="HCalToMipCalibration" type="float">""" + str(self._HCalGeVToMIP) + """</parameter>
@@ -546,13 +592,16 @@ class ValidatingPandora:
 ### Start of writePandoraAnalsisSiECalXml function
 ### ----------------------------------------------------------------------------------------------------
 
-    def writePandoraAnalsisSiECalXml(self):
+    def writePandoraAnalsisSiECalXml(self, pandoraSettingsFile):
         self.logger.debug('Writing PandoraAnalysis xml block for Si ECal.')
-        pandoraAnalysis  = """
-<processor name="MyPfoAnalysisDefault" type="PfoAnalysis">
+
+        pandoraAnalysisTemplate = ''
+        for key, value in pandoraSettingsFile.iteritems():
+            pandoraAnalysisTemplate += """ 
+<processor name="MyPfoAnalysis""" + key + """" type="PfoAnalysis">
   <!--PfoAnalysis analyses output of PandoraPFANew, Modified for calibration-->
   <!--Names of input pfo collection-->
-  <parameter name="PfoCollection" type="string" lcioInType="ReconstructedParticle">PandoraPFOsDefault </parameter>
+  <parameter name="PfoCollection" type="string" lcioInType="ReconstructedParticle">PandoraPFOs""" + key + """ </parameter>
   <!--Names of mc particle collection-->
   <parameter name="MCParticleCollection" type="string" lcioInType="MCParticle">MCParticle </parameter>
   <!--Collect Calibration Details-->
@@ -583,9 +632,9 @@ class ValidatingPandora:
   <!--Set the debug print level-->
   <parameter name="Printing" type="int"> 0 </parameter>
   <!--Output root file name-->
-  <parameter name="RootFile" type="string">PfoAnalysisRootFile</parameter>
+  <parameter name="RootFile" type="string">""" + key + """PfoAnalysisRootFile</parameter>
 </processor>"""
-        return pandoraAnalysis
+        return pandoraAnalysisTemplate
 
 ### ----------------------------------------------------------------------------------------------------
 ### End of writePandoraAnalsisSiECalXml function
