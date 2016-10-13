@@ -4,19 +4,19 @@
 import subprocess, os, sys
 
 inputRootFolder = sys.argv[1]
-localBinary = '#LocalBinary#'
-releasedBinary = '#ReleaseBinary#'
+localBinary = #LocalBinary#
+releasedBinary = #ReleaseBinary#
 
 results = ''
 for setting in ['Local', 'Release']:
     results = ''
     for energy in [91, 200, 360, 500]:
-        for pandoraSettings in ['Default', 'PerfectPhoton', 'PerfectPhotonNK0L', 'PerfectPFA']:
+        for pandoraSettings in ['Default', 'PerfectPhoton', 'PerfectPhotonNeutronK0L', 'PerfectPFA']:
             results += '-----------------------------------------------------------------------------------------------------------------------------------\n'
             results += setting + ' ' + pandoraSettings + ' ' + str(energy) + 'GeV\n'
             results += '-----------------------------------------------------------------------------------------------------------------------------------\n'
 
-        inputRootFileFormat = 'Validating_' + setting + '_PandoraSettings' + pandoraSettings + '_Z_uds_' + str(energy) + '_GeV_Job_Number_(.*?).root'
+        inputRootFileFormat = 'Validating_' + setting + '_PandoraSettings' + pandoraSettings + '_Z_uds_' + str(energy) + '_GeV_Job_Number_*.root'
 
         if 'Local' in setting:
             argsString = localBinary + ' ' + os.path.join(inputRootFolder, inputRootFileFormat)
@@ -33,7 +33,7 @@ for setting in ['Local', 'Release']:
             if 'fPFA_L7A' in line:
                 resultsLine = line
 
-        results += resultsLine
+        results += resultsLine + '\n'
 
     resultsFileName = setting + '_JetEnergyResolutions.txt'
     textFile = open(resultsFileName, 'w')

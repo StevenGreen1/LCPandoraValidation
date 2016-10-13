@@ -42,7 +42,6 @@ releasePandoraSettingsDefaultFile = open(releasePandoraSettingsDefault, 'r')
 content = releasePandoraSettingsDefaultFile.read()
 releasePandoraSettingsDefaultFile.close()
 
-print releasePandoraSettingsLikelihoodData
 content = re.sub('PandoraLikelihoodData9EBin.xml', releasePandoraSettingsLikelihoodData, content)
 
 releasePandoraSettingsDefaultFile = open(releasePandoraSettingsDefault, 'w')
@@ -214,53 +213,18 @@ newTemplateFile.close()
 #########################
 # Make AnalysePerformance.sh
 #########################
-analysePerformanceFolder = os.path.join(cwd, 'AnalysePerformance')
-if not os.path.exists(analysePerformanceFolder):
-    os.makedirs(analysePerformanceFolder)
-
 analysePerformanceRelease = os.path.join(releasePandoraAnalysis,'AnalysePerformance')
-analysePerformanceLocal = os.path.join(cwd,'MarlinPandora/bin/AnalysePerformance')
+analysePerformanceLocal = os.path.join(cwd,'LCPandoraAnalysis/bin/AnalysePerformance')
+analysePerformance = os.path.join(cwd, 'AnalysePerformance/AnalysePerformance.py')
 
-analysePerformance = """#!/usr/bin/python
-# -*- coding: utf-8 -*-
+analysePerformanceFile = open(analysePerformance, 'r')
+content = analysePerformanceFile.read()
+analysePerformanceFile.close()
 
-import subprocess, os, sys
+content = re.sub('#ReleaseBinary#', analysePerformanceRelease, content)
+content = re.sub('#LocalBinary#', analysePerformanceLocal, content)
 
-inputRootFolder = sys.argv[1]
-localBinary = """ + analysePerformanceLocal + """
-releasedBinary = """ + analysePerformanceRelease + """
-
-results = ''
-for setting in ['Local', 'Release']
-    results = ''
-    for energy in [91, 200, 360, 500]:
-        for pandoraSettings in ['Default', 'PerfectPhoton', 'PerfectPhotonNK0L', 'PerfectPFA']:
-            results += '-----------------------------------------------------------------------------------------------------------------------------------'
-            results += settign + ' ' + pandoraSettings + ' ' + str(energy) + 'GeV'
-            results += '-----------------------------------------------------------------------------------------------------------------------------------'
-
-        inputRootFileFormat = 'Validating_' + setting + '_PandoraSettings' + pandoraSettings + '_Z_uds_' + str(energy) + '_GeV_Job_Number_(.*?).root'
-
-        argsString = executable + ' ' + os.path.join(path,inputRootFileFormat)
-        args = argsString.split()
-        popen = subprocess.Popen(args, stdout=subprocess.PIPE)
-        popen.wait()
-        output = popen.stdout.read()
-
-        resultsLine = ''
-        for line in output.splitlines():
-            if 'fPFA_L7A' in line:
-                resultsLine = line
-
-        results += resultsLine
-
-    resultsFileName = setting + '_JetEnergyResolutions.txt'
-    textFile = open(resultsFileName, 'w')
-    textFile.write(results)
-    textFile.close()
-"""
-
-analysePerformanceFile = open(os.path.join(analysePerformanceFolder, 'AnalysePeformance.py'), 'w')
-analysePerformanceFile.write(analysePerformance)
+analysePerformanceFile = open(analysePerformance, 'w')
+analysePerformanceFile.write(content)
 analysePerformanceFile.close()
 
