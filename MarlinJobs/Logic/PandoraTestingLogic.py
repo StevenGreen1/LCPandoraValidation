@@ -134,7 +134,7 @@ class ValidatingPandora:
         self._UseCondor = True
         self._CondorRunListRelease = []
         self._CondorRunListLocal = []
-        self._CondorMaxRuns = 1
+        self._CondorMaxRuns = 500
 
         'Random String For Job Submission'
         self._RandomString = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
