@@ -28,7 +28,7 @@ for line in lines:
             elif 'libPandoraAnalysis' in subline:
                 releasePandoraAnalysis = subline
 releaseMarlinPandoraScriptsFolder = os.path.join(os.path.dirname(releaseMarlinPandora),'../scripts')
-releasePandoraAnalysis = os.path.join(os.path.dirname(releasePandoraAnalysis,'../bin')
+releasePandoraAnalysis = os.path.join(os.path.dirname(releasePandoraAnalysis),'../bin')
 
 pandoraSettingsReleaseFolder = os.path.join(cwd, 'MarlinJobs/PandoraSettings/Release')
 if not os.path.exists(pandoraSettingsReleaseFolder):
@@ -235,9 +235,9 @@ for setting in ['Local', 'Release']
     results = ''
     for energy in [91, 200, 360, 500]:
         for pandoraSettings in ['Default', 'PerfectPhoton', 'PerfectPhotonNK0L', 'PerfectPFA']:
-            results += '-----------------------------------------------------------------------------------------------------------------------------------\n'
-            results += settign + ' ' + pandoraSettings + ' ' + str(energy) + 'GeV\n'
-            results += '-----------------------------------------------------------------------------------------------------------------------------------\n'
+            results += '-----------------------------------------------------------------------------------------------------------------------------------'
+            results += settign + ' ' + pandoraSettings + ' ' + str(energy) + 'GeV'
+            results += '-----------------------------------------------------------------------------------------------------------------------------------'
 
         inputRootFileFormat = 'Validating_' + setting + '_PandoraSettings' + pandoraSettings + '_Z_uds_' + str(energy) + '_GeV_Job_Number_(.*?).root'
 
@@ -252,7 +252,7 @@ for setting in ['Local', 'Release']
             if 'fPFA_L7A' in line:
                 resultsLine = line
 
-        results += resultsLine + '\n'
+        results += resultsLine
 
     resultsFileName = setting + '_JetEnergyResolutions.txt'
     textFile = open(resultsFileName, 'w')
