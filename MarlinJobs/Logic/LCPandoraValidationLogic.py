@@ -523,7 +523,8 @@ class LCPandoraValidationLogic:
 
     def writePandoraXmlHeader(self, pandoraSettingsFile):
         self.logger.debug('Writing MarlinPandora and PfoAnalysis xml header block.')
-        headerString = ''
+        headerString = """
+<processor name="MyRecoMCTruthLinker"/>"""
         for key, value in pandoraSettingsFile.iteritems():
             headerString += """
 <processor name="MyMarlinPandora""" + key + """"/>
