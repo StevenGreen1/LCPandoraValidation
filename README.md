@@ -11,7 +11,7 @@ To run the validation script please do the following:
 
 4) Run 'python Generate.py' to generate all scripts needed for marlin jobs.
 
-5) Modify paths in MarlinJobs/Validate.py and run 'python Validate.py' to set the marlin jobs running.
+5) Modify paths in MarlinJobs/LCValidatePandora.py, cd into the MarlinJobs directory and run 'python LCValidatePandora.py' to set the marlin jobs running.
 
 6) Wait for jobs to finish.  Then run 'python AnalysePerformance/AnalsePerformance.py Path_To_Root_Files.  Results saved as Local_JetEnergyResolutions.txt and Release_JetEnergyResolutions.txt.'
 
