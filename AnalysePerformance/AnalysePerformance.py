@@ -4,8 +4,8 @@
 import subprocess, os, sys
 
 inputRootFolder = sys.argv[1]
-localBinary = '#LocalBinary#'
-releasedBinary = '#ReleaseBinary#'
+localBinary = '/var/clus/usera/sg568/LC/Validation/Reconstruction/DD4HEP/v01-19-04/LCPandoraValidation/LCPandoraAnalysis/bin/AnalysePerformance'
+releasedBinary = '/cvmfs/ilc.desy.de/sw/x86_64_gcc49_sl6/v01-19-04/PandoraAnalysis/v01-02-01/lib/../bin/AnalysePerformance'
 
 results = ''
 for setting in ['Local', 'Release']:

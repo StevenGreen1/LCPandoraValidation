@@ -2,6 +2,11 @@ import os
 import re
 import sys
 
+# Arguments
+compactFile  = sys.argv[1]
+
+print 'Using compact Xml file : ' + compactFile
+
 cwd = os.getcwd()
 
 #########################
@@ -14,27 +19,19 @@ if not os.path.exists(templatesFolder):
 #########################
 # Get Release Pandora Settings
 #########################
-releaseMarlinPandora = ''
-releasePandoraAnalysis = ''
-lines = [line.rstrip('\n') for line in open('init_ilcsoft.sh')]
-newContent = ''
-cwd = os.getcwd()
-for line in lines:
-    if 'MarlinPandora' in line:
-        newline = ''
-        for subline in line.split(':'):
-            if 'libMarlinPandora' in subline:
-                releaseMarlinPandora = subline
-            elif 'libPandoraAnalysis' in subline:
-                releasePandoraAnalysis = subline
-releaseMarlinPandoraScriptsFolder = os.path.join(os.path.dirname(releaseMarlinPandora),'../scripts')
-releasePandoraAnalysis = os.path.join(os.path.dirname(releasePandoraAnalysis),'../bin')
 
+# Get Pandora Settings and Likelihood From ILDConfig
 pandoraSettingsReleaseFolder = os.path.join(cwd, 'MarlinJobs/PandoraSettings/Release')
 if not os.path.exists(pandoraSettingsReleaseFolder):
     os.makedirs(pandoraSettingsReleaseFolder)
 
-os.system('cp ' + releaseMarlinPandoraScriptsFolder + '/* ' + pandoraSettingsReleaseFolder)
+standardConfigFolder = os.path.join(cwd, 'ILDConfig/StandardConfig/lcgeo_current/')
+os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsDefault.xml') + ' ' + pandoraSettingsReleaseFolder)
+os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhoton.xml') + ' ' + pandoraSettingsReleaseFolder)
+os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhotonNeutronK0L.xml') + ' ' + pandoraSettingsReleaseFolder)
+os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPFA.xml') + ' ' + pandoraSettingsReleaseFolder)
+os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraLikelihoodData9EBin.xml') + ' ' + pandoraSettingsReleaseFolder)
+
 releasePandoraSettingsDefault = os.path.join(pandoraSettingsReleaseFolder, 'PandoraSettingsDefault.xml')
 releasePandoraSettingsLikelihoodData = os.path.join(pandoraSettingsReleaseFolder, 'PandoraLikelihoodData9EBin.xml')
 
@@ -48,15 +45,36 @@ releasePandoraSettingsDefaultFile = open(releasePandoraSettingsDefault, 'w')
 releasePandoraSettingsDefaultFile.write(content)
 releasePandoraSettingsDefaultFile.close()
 
+# Find Pandora Analysis To Use
+releasePandoraAnalysis = ''
+
+lines = [line.rstrip('\n') for line in open('init_ilcsoft.sh')]
+newContent = ''
+cwd = os.getcwd()
+for line in lines:
+    if 'DDMarlinPandora' in line:
+        newline = ''
+        for subline in line.split(':'):
+            if 'libPandoraAnalysis' in subline:
+                releasePandoraAnalysis = subline
+
+releasePandoraAnalysis = os.path.join(os.path.dirname(releasePandoraAnalysis),'../bin')
+
 #########################
 # Get Local Pandora Settings
 #########################
+
+# Get Pandora Settings and Likelihood From ILDConfig
 pandoraSettingsLocalFolder = os.path.join(cwd, 'MarlinJobs/PandoraSettings/Local')
 if not os.path.exists(pandoraSettingsLocalFolder):
     os.makedirs(pandoraSettingsLocalFolder)
 
-localMarlinPandoraScriptsFolder = os.path.join(cwd, 'MarlinPandora/scripts')
-os.system('cp ' + localMarlinPandoraScriptsFolder + '/* ' + pandoraSettingsLocalFolder)
+os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsDefault.xml') + ' ' + pandoraSettingsLocalFolder)
+os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhoton.xml') + ' ' + pandoraSettingsLocalFolder)
+os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhotonNeutronK0L.xml') + ' ' + pandoraSettingsLocalFolder)
+os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPFA.xml') + ' ' + pandoraSettingsLocalFolder)
+os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraLikelihoodData9EBin.xml') + ' ' + pandoraSettingsLocalFolder)
+
 localPandoraSettingsDefault = os.path.join(pandoraSettingsLocalFolder, 'PandoraSettingsDefault.xml')
 localPandoraSettingsLikelihoodData = os.path.join(pandoraSettingsLocalFolder, 'PandoraLikelihoodData9EBin.xml')
 
@@ -70,35 +88,12 @@ localPandoraSettingsDefaultFile = open(localPandoraSettingsDefault, 'w')
 localPandoraSettingsDefaultFile.write(content)
 localPandoraSettingsDefaultFile.close()
 
+localPandoraAnalysis = os.path.join(cwd,'LCPandoraAnalysis/bin')
+
 #########################
 # Make MarlinLocal.sh
 #########################
 marlinLocal = """#!/bin/bash
-gcc_config_version=4.8.1
-mpfr_config_version=3.1.2
-gmp_config_version=5.1.1
-LCGPLAT=x86_64-slc6-gcc48-opt
-LCG_lib_name=lib64
-LCG_arch=x86_64
-
-LCG_contdir=/afs/cern.ch/sw/lcg/contrib
-LCG_gcc_home=${LCG_contdir}/gcc/${gcc_config_version}/${LCGPLAT}
-LCG_mpfr_home=${LCG_contdir}/mpfr/${mpfr_config_version}/${LCGPLAT}
-LCG_gmp_home=${LCG_contdir}/gmp/${gmp_config_version}/${LCGPLAT}
-
-export PATH=${LCG_gcc_home}/bin:${PATH}
-export COMPILER_PATH=${LCG_gcc_home}/lib/gcc/${LCG_arch}-unknown-linux-gnu/${gcc_config_version}
-
-if [ ${LD_LIBRARY_PATH} ]
-then
-export LD_LIBRARY_PATH=${LCG_gcc_home}/${LCG_lib_name}:${LCG_mpfr_home}/lib:${LCG_gmp_home}/lib:${LD_LIBRARY_PATH}
-else
-export LD_LIBRARY_PATH=${LCG_gcc_home}/${LCG_lib_name}:${LCG_mpfr_home}/lib:${LCG_gmp_home}/lib
-fi
-
-export PATH=/afs/cern.ch/sw/lcg/external/Python/2.7.4/x86_64-slc6-gcc48-opt/bin/:$PATH
-export LD_LIBRARY_PATH=/afs/cern.ch/sw/lcg/external/Python/2.7.4/x86_64-slc6-gcc48-opt/lib/:$LD_LIBRARY_PATH
-
 source """ + os.path.join(cwd, 'init_ilcsoft_local.sh') + """
 ls $ILCSOFT
 
@@ -114,32 +109,6 @@ os.system('chmod u+x MarlinJobs/Templates/MarlinLocal.sh')
 # Make MarlinRelease.sh
 #########################
 marlinRelease = """#!/bin/bash
-
-gcc_config_version=4.8.1
-mpfr_config_version=3.1.2
-gmp_config_version=5.1.1
-LCGPLAT=x86_64-slc6-gcc48-opt
-LCG_lib_name=lib64
-LCG_arch=x86_64
-
-LCG_contdir=/afs/cern.ch/sw/lcg/contrib
-LCG_gcc_home=${LCG_contdir}/gcc/${gcc_config_version}/${LCGPLAT}
-LCG_mpfr_home=${LCG_contdir}/mpfr/${mpfr_config_version}/${LCGPLAT}
-LCG_gmp_home=${LCG_contdir}/gmp/${gmp_config_version}/${LCGPLAT}
-
-export PATH=${LCG_gcc_home}/bin:${PATH}
-export COMPILER_PATH=${LCG_gcc_home}/lib/gcc/${LCG_arch}-unknown-linux-gnu/${gcc_config_version}
-
-if [ ${LD_LIBRARY_PATH} ]
-then
-export LD_LIBRARY_PATH=${LCG_gcc_home}/${LCG_lib_name}:${LCG_mpfr_home}/lib:${LCG_gmp_home}/lib:${LD_LIBRARY_PATH}
-else
-export LD_LIBRARY_PATH=${LCG_gcc_home}/${LCG_lib_name}:${LCG_mpfr_home}/lib:${LCG_gmp_home}/lib
-fi
-
-export PATH=/afs/cern.ch/sw/lcg/external/Python/2.7.4/x86_64-slc6-gcc48-opt/bin/:$PATH
-export LD_LIBRARY_PATH=/afs/cern.ch/sw/lcg/external/Python/2.7.4/x86_64-slc6-gcc48-opt/lib/:$LD_LIBRARY_PATH
-
 source """ + os.path.join(cwd, 'init_ilcsoft.sh') + """
 ls $ILCSOFT
 
@@ -154,8 +123,7 @@ os.system('chmod u+x MarlinJobs/Templates/MarlinRelease.sh')
 #########################
 # Make MarlinTemplate.xml
 #########################
-os.system('svn export https://svnsrv.desy.de/public/marlinreco/ILDConfig/trunk/StandardConfig/current/bbudsc_3evt_stdreco.xml')
-standardConfigXml = 'bbudsc_3evt_stdreco.xml'
+standardConfigXml = os.path.join(standardConfigFolder, 'bbudsc_3evt_stdreco_dd4hep.xml')
 
 newContent = ''
 lines = [line.rstrip('\n') for line in open(standardConfigXml)]
@@ -206,6 +174,9 @@ for line in lines:
     if not delete and not deleteParam:
         newContent += line + '\n'
 
+
+newContent = re.sub('\$lcgeo_DIR/ILD/compact/ILD_o1_v05/ILD_o1_v05.xml', compactFile, newContent)
+
 newTemplateFile = open('MarlinJobs/Templates/MarlinTemplate.xml', 'w')
 newTemplateFile.write(newContent)
 newTemplateFile.close()
@@ -214,7 +185,7 @@ newTemplateFile.close()
 # Make AnalysePerformance.sh
 #########################
 analysePerformanceRelease = os.path.join(releasePandoraAnalysis,'AnalysePerformance')
-analysePerformanceLocal = os.path.join(cwd,'LCPandoraAnalysis/bin/AnalysePerformance')
+analysePerformanceLocal = os.path.join(localPandoraAnalysis,'AnalysePerformance')
 analysePerformance = os.path.join(cwd, 'AnalysePerformance/AnalysePerformance.py')
 
 analysePerformanceFile = open(analysePerformance, 'r')

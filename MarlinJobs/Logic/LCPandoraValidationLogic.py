@@ -169,8 +169,7 @@ class LCPandoraValidationLogic:
         self.prepareSteeringFiles()
         self.runCondorJobs(self._CondorRunListRelease, self._MarlinExecutableRelease)
         self.runCondorJobs(self._CondorRunListLocal, self._MarlinExecutableLocal)
-        self.checkCondorJobs(self._MarlinExecutableRelease)
-        self.checkCondorJobs(self._MarlinExecutableLocal)
+        self.checkCondorJobs()
 
 ### ----------------------------------------------------------------------------------------------------
 ### End of runPandoras function
@@ -204,7 +203,8 @@ class LCPandoraValidationLogic:
     def prepareSteeringFiles(self):
         self.logger.debug('Preparing Z_uds steering files.')
 
-        for energy in [91,200,360,500]:
+#        for energy in [91,200,360,500]:
+        for energy in [91]:
             counter = 0
             jobName = 'Z_uds_' + str(energy) + '_GeV'
             activeSlcioFormat = self._SlcioFormat
@@ -353,22 +353,22 @@ class LCPandoraValidationLogic:
 
     def writeXmlFile(self, template, pandoraSettingsFile):
         self.logger.debug('Writing xml file.')
-        digitiserHeader = self.writeILDCaloDigiSiECalXmlHeader()
-        template = re.sub('DigitiserHeader',digitiserHeader,template)
+#        digitiserHeader = self.writeILDCaloDigiSiECalXmlHeader()
+#        template = re.sub('DigitiserHeader',digitiserHeader,template)
 
-        simpleMuonDigiHeader = self.writeSimpleMuonDigiXmlHeader()
-        template = re.sub('SimpleMuonDigiHeader',simpleMuonDigiHeader,template)
+#        simpleMuonDigiHeader = self.writeSimpleMuonDigiXmlHeader()
+#        template = re.sub('SimpleMuonDigiHeader',simpleMuonDigiHeader,template)
 
         pandoraHeader = self.writePandoraXmlHeader(pandoraSettingsFile)
         template = re.sub('PandoraHeader',pandoraHeader,template)
 
-        digitiserImplementation = self.writeILDCaloDigiSiECalXml()
-        template = re.sub('DigitiserImplementation',digitiserImplementation,template)
+#        digitiserImplementation = self.writeILDCaloDigiSiECalXml()
+#        template = re.sub('DigitiserImplementation',digitiserImplementation,template)
 
-        simpleMuonDigiImplementation = self.writeSimpleMuonDigiXml()
-        template = re.sub('SimpleMuonDigiImplementation',simpleMuonDigiImplementation,template)
+#        simpleMuonDigiImplementation = self.writeSimpleMuonDigiXml()
+#        template = re.sub('SimpleMuonDigiImplementation',simpleMuonDigiImplementation,template)
 
-        pandoraImplementation = self.writeMarlinPandoraSiECalXml(pandoraSettingsFile)
+        pandoraImplementation = self.writeDDMarlinPandoraSiECalXml(pandoraSettingsFile)
         pandoraImplementation += '\n'
         pandoraImplementation += self.writePandoraAnalsisSiECalXml(pandoraSettingsFile)
         template = re.sub('PandoraImplementation',pandoraImplementation,template)
@@ -527,66 +527,101 @@ class LCPandoraValidationLogic:
 <processor name="MyRecoMCTruthLinker"/>"""
         for key, value in pandoraSettingsFile.iteritems():
             headerString += """
-<processor name="MyMarlinPandora""" + key + """"/>
+<processor name="MyDDMarlinPandora""" + key + """"/>
 <processor name="MyPfoAnalysis""" + key + """"/>"""
         return headerString
 
 ### ----------------------------------------------------------------------------------------------------
 ### End of writeMarlinPandoraXmlHeader function
 ### ----------------------------------------------------------------------------------------------------
-### Start of writeMarlinPandoraSiECalXml function
+### Start of writeDDMarlinPandoraSiECalXml function
 ### ----------------------------------------------------------------------------------------------------
 
-    def writeMarlinPandoraSiECalXml(self, pandoraSettingsFile):
-        self.logger.debug('Writing MarlinPandora xml block for Si ECal.')
+    def writeDDMarlinPandoraSiECalXml(self, pandoraSettingsFile):
+        self.logger.debug('Writing DDMarlinPandora xml block for Si ECal.')
         marlinPandoraTemplate = ''
         for key, value in pandoraSettingsFile.iteritems():
             marlinPandoraTemplate += """
-<processor name="MyMarlinPandora""" + key + """" type="PandoraPFANewProcessor">
-  <parameter name="PandoraSettingsXmlFile" type="String">""" + value + """</parameter>
-  <!-- Collection names -->
-  <parameter name="TrackCollections" type="StringVec">MarlinTrkTracks</parameter>
-  <parameter name="ECalCaloHitCollections" type="StringVec">ECALBarrel ECALEndcap ECALOther</parameter>
-  <parameter name="HCalCaloHitCollections" type="StringVec">HCALBarrel HCALEndcap HCALOther</parameter>
-  <parameter name="LCalCaloHitCollections" type="StringVec">LCAL</parameter>
-  <parameter name="LHCalCaloHitCollections" type="StringVec">LHCAL</parameter>
-  <parameter name="MuonCaloHitCollections" type="StringVec">MUON</parameter>
-  <parameter name="MCParticleCollections" type="StringVec">MCParticle</parameter>
-  <parameter name="RelCaloHitCollections" type="StringVec">RelationCaloHit RelationMuonHit</parameter>
-  <parameter name="RelTrackCollections" type="StringVec">MarlinTrkTracksMCTruthLink</parameter>
-  <parameter name="KinkVertexCollections" type="StringVec">KinkVertices</parameter>
-  <parameter name="ProngVertexCollections" type="StringVec">ProngVertices</parameter>
-  <parameter name="SplitVertexCollections" type="StringVec">SplitVertices</parameter>
-  <parameter name="V0VertexCollections" type="StringVec">V0Vertices</parameter>
-  <parameter name="ClusterCollectionName" type="String">PandoraClusters""" + key + """</parameter>
-  <parameter name="PFOCollectionName" type="String">PandoraPFOs""" + key + """</parameter>
-  <parameter name="StartVertexCollectionName" type="String">StartVertices""" + key + """</parameter>
-  <!-- Calibration constants -->
-  <parameter name="ECalToMipCalibration" type="float">""" + str(self._ECalGeVToMIP) + """</parameter>
-  <parameter name="HCalToMipCalibration" type="float">""" + str(self._HCalGeVToMIP) + """</parameter>
-  <parameter name="ECalMipThreshold" type="float">""" + str(self._ECalMIPThresholdPandora) + """</parameter>
-  <parameter name="HCalMipThreshold" type="float">""" + str(self._HCalMIPThresholdPandora) + """</parameter>
-  <parameter name="ECalToEMGeVCalibration" type="float">""" + str(self._ECalToEm) + """</parameter>
-  <parameter name="HCalToEMGeVCalibration" type="float">""" + str(self._HCalToEm) + """</parameter>
-  <parameter name="ECalToHadGeVCalibrationBarrel" type="float">""" + str(self._ECalToHad) + """</parameter>
-  <parameter name="ECalToHadGeVCalibrationEndCap" type="float">""" + str(self._ECalToHad) + """</parameter>
-  <parameter name="HCalToHadGeVCalibration" type="float">""" + str(self._HCalToHad) + """</parameter>
-  <parameter name="MuonToMipCalibration" type="float">""" + str(self._MuonGeVToMIP) + """</parameter>
-  <parameter name="DigitalMuonHits" type="int">0</parameter>
-  <parameter name="MaxHCalHitHadronicEnergy" type="float">""" + str(self._MHHHE) + """</parameter>
-  <parameter name="AbsorberRadLengthECal" type="float">0.2854</parameter>
-  <parameter name="AbsorberIntLengthECal" type="float">0.0101</parameter>
-  <parameter name="AbsorberRadLengthHCal" type="float">0.0569</parameter>
-  <parameter name="AbsorberIntLengthHCal" type="float">0.0060</parameter>
-  <parameter name="AbsorberRadLengthOther" type="float">0.0569</parameter>
-  <parameter name="AbsorberIntLengthOther" type="float">0.0060</parameter>
-  <!--Whether to calculate track states manually, rather than copy stored fitter values-->
-  <parameter name="UseOldTrackStateCalculation" type="int">0 </parameter>
-</processor> """
+
+  <processor name="MyDDMarlinPandora""" + key + """" type="DDPandoraPFANewProcessor">
+    <!--Track cut on distance from BarrelTracker inner r to id whether track can form pfo-->
+    <parameter name="MaxBarrelTrackerInnerRDistance" type="float">105.0 </parameter>
+    <parameter name="PandoraSettingsXmlFile" type="String">""" + value + """</parameter>
+    <!-- Collection names -->
+    <parameter name="TrackCollections" type="StringVec">MarlinTrkTracks</parameter>
+    <parameter name="ECalCaloHitCollections" type="StringVec">EcalBarrelCollectionRec EcalBarrelCollectionGapHits EcalEndcapsCollectionRec EcalEndcapsCollectionGapHits EcalEndcapRingCollectionRec</parameter>
+    <parameter name="HCalCaloHitCollections" type="StringVec">HcalBarrelCollectionRec HcalEndcapsCollectionRec HcalEndcapRingCollectionRec</parameter>
+    <parameter name="LCalCaloHitCollections" type="StringVec">LCAL</parameter>
+    <parameter name="LHCalCaloHitCollections" type="StringVec">LHCAL</parameter>
+    <parameter name="MuonCaloHitCollections" type="StringVec">MUON</parameter>
+    <parameter name="MCParticleCollections" type="StringVec">MCParticle</parameter>
+    <parameter name="RelCaloHitCollections" type="StringVec">EcalBarrelRelationsSimRec EcalEndcapsRelationsSimRec EcalEndcapRingRelationsSimRec HcalBarrelRelationsSimRec HcalEndcapsRelationsSimRec HcalEndcapRingRelationsSimRec RelationMuonHit</parameter>
+    <parameter name="RelTrackCollections" type="StringVec">MarlinTrkTracksMCP</parameter>
+    <parameter name="KinkVertexCollections" type="StringVec">KinkVertices</parameter>
+    <parameter name="ProngVertexCollections" type="StringVec">ProngVertices</parameter>
+    <parameter name="SplitVertexCollections" type="StringVec">SplitVertices</parameter>
+    <parameter name="V0VertexCollections" type="StringVec">V0Vertices</parameter>
+    <parameter name="ClusterCollectionName" type="String">PandoraClusters""" + key + """</parameter>
+    <parameter name="PFOCollectionName" type="String">PandoraPFOs""" + key + """</parameter>
+    <!-- Calibration constants -->
+    <parameter name="ECalToMipCalibration">149.254</parameter>
+    <parameter name="HCalToMipCalibration">35.3357</parameter>
+    <parameter name="MuonToMipCalibration">10.3093</parameter>
+    <parameter name="ECalMipThreshold" type="float">0.5</parameter>
+    <parameter name="HCalMipThreshold" type="float">0.3</parameter>
+    <parameter name="ECalToEMGeVCalibration">1.0</parameter>
+    <parameter name="HCalToEMGeVCalibration">1.0</parameter>
+    <parameter name="ECalToHadGeVCalibrationBarrel">1.20700253651</parameter>
+    <parameter name="ECalToHadGeVCalibrationEndCap">1.20700253651</parameter>
+    <parameter name="HCalToHadGeVCalibration">1.02821419758</parameter>
+    <parameter name="DigitalMuonHits" type="int">0</parameter>
+    <parameter name="MaxHCalHitHadronicEnergy" type="float">1000000.</parameter>
+    <parameter name="MaxHCalHitHadronicEnergy" type="float">1000000.</parameter>
+
+    <!--Whether to calculate track states manually, rather than copy stored fitter values-->
+    <parameter name="UseOldTrackStateCalculation" type="int"> 0 1  </parameter> <!-- !!!FIXME, workaround for some missing TS AtCalo face - this should really be: 0 -->
+    <parameter name="NEventsToSkip" type="int">0</parameter>
+    <!--parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> DEBUG0 </parameter-->
+    <!--The name of the Vertex Barrel detector-->
+    <parameter name="VertexBarrelDetectorName" type="string">VXD </parameter>
+    <!--Detector names of the Trackers in the Barrel starting from the innermost one-->
+    <parameter name="TrackerBarrelDetectorNames" type="StringVec">TPC</parameter>
+    <!--Detector names of the Trackers in the Endcap starting from the innermost one-->
+    <parameter name="TrackerEndcapDetectorNames" type="StringVec">FTD</parameter>
+    <parameter name="CoilName" type="string">Coil</parameter>
+    <parameter name="ECalBarrelDetectorName" type="string">EcalBarrel </parameter>
+    <parameter name="ECalEndcapDetectorName" type="string">EcalEndcap </parameter>
+    <parameter name="ECalOtherDetectorNames" type="StringVec">EcalPlug Lcal BeamCal  </parameter>
+    <parameter name="HCalEndcapDetectorName" type="string">HcalEndcap </parameter>
+    <parameter name="HCalBarrelDetectorName" type="string">HcalBarrel </parameter>
+    <parameter name="HCalOtherDetectorNames" type="StringVec">HcalRing LHcal </parameter>
+    <parameter name="MuonBarrelDetectorName" type="string">YokeBarrel </parameter>
+    <parameter name="MuonEndcapDetectorName" type="string">YokeEndcap </parameter>
+    <parameter name="MuonOtherDetectorNames" type="StringVec"></parameter>
+    <!--Decides whether to create gaps in the geometry (ILD-specific)-->
+    <!---SHOULD BE TRUE FOR ILD BUT INNER/OUTER SYMMETRIES ARE NOT COMPATIBLE -->
+    <parameter name="CreateGaps" type="bool">false</parameter>
+    <!--The name of the DDTrackCreator implementation-->
+    <parameter name="TrackCreatorName" type="string">DDTrackCreatorILD </parameter>
+    <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> SILENT </parameter>
+  </processor>"""
+
+#  <parameter name="ECalToMipCalibration" type="float">""" + str(self._ECalGeVToMIP) + """</parameter>
+#  <parameter name="HCalToMipCalibration" type="float">""" + str(self._HCalGeVToMIP) + """</parameter>
+#  <parameter name="ECalMipThreshold" type="float">""" + str(self._ECalMIPThresholdPandora) + """</parameter>
+#  <parameter name="HCalMipThreshold" type="float">""" + str(self._HCalMIPThresholdPandora) + """</parameter>
+#  <parameter name="ECalToEMGeVCalibration" type="float">""" + str(self._ECalToEm) + """</parameter>
+#  <parameter name="HCalToEMGeVCalibration" type="float">""" + str(self._HCalToEm) + """</parameter>
+#  <parameter name="ECalToHadGeVCalibrationBarrel" type="float">""" + str(self._ECalToHad) + """</parameter>
+#  <parameter name="ECalToHadGeVCalibrationEndCap" type="float">""" + str(self._ECalToHad) + """</parameter>
+#  <parameter name="HCalToHadGeVCalibration" type="float">""" + str(self._HCalToHad) + """</parameter>
+#  <parameter name="MuonToMipCalibration" type="float">""" + str(self._MuonGeVToMIP) + """</parameter>
+#  <parameter name="DigitalMuonHits" type="int">0</parameter>
+#  <parameter name="MaxHCalHitHadronicEnergy" type="float">""" + str(self._MHHHE) + """</parameter>
         return marlinPandoraTemplate
 
 ### ----------------------------------------------------------------------------------------------------
-### End of writeMarlinPandoraSiECalXml function
+### End of writeDDMarlinPandoraSiECalXml function
 ### ----------------------------------------------------------------------------------------------------
 ### Start of writePandoraAnalsisSiECalXml function
 ### ----------------------------------------------------------------------------------------------------
@@ -597,42 +632,46 @@ class LCPandoraValidationLogic:
         pandoraAnalysisTemplate = ''
         for key, value in pandoraSettingsFile.iteritems():
             pandoraAnalysisTemplate += """ 
-<processor name="MyPfoAnalysis""" + key + """" type="PfoAnalysis">
-  <!--PfoAnalysis analyses output of PandoraPFANew, Modified for calibration-->
-  <!--Names of input pfo collection-->
-  <parameter name="PfoCollection" type="string" lcioInType="ReconstructedParticle">PandoraPFOs""" + key + """ </parameter>
-  <!--Names of mc particle collection-->
-  <parameter name="MCParticleCollection" type="string" lcioInType="MCParticle">MCParticle </parameter>
-  <!--Collect Calibration Details-->
-  <parameter name="CollectCalibrationDetails" type="int">1</parameter>
-  <!--Detector Geometry Missing From Gear-->
-  <parameter name="HCalRingOuterSymmetryOrder" type="int">8</parameter>
-  <parameter name="HCalRingOuterPhi0" type="int">0</parameter>
-  <!--Name of the ECAL collection used to form clusters-->
-  <parameter name="ECalCollections" type="StringVec" lcioInType="CalorimeterHit">ECALBarrel ECALEndcap ECALOther</parameter>
-  <!--Name of the HCAL collection used to form clusters-->
-  <parameter name="HCalCollections" type="StringVec" lcioInType="CalorimeterHit">HCALBarrel HCALEndcap HCALOther </parameter>
-  <!--Name of the MUON collection used to form clusters-->
-  <parameter name="MuonCollections" type="StringVec" lcioInType="CalorimeterHit">MUON </parameter>
-  <!--Name of the BCAL collection used to form clusters-->
-  <parameter name="BCalCollections" type="StringVec" lcioInType="CalorimeterHit">BCAL</parameter>
-  <!--Name of the LHCAL collection used to form clusters-->
-  <parameter name="LHCalCollections" type="StringVec" lcioInType="CalorimeterHit">LHCAL </parameter>
-  <!--Name of the LCAL collection used to form clusters-->
-  <parameter name="LCalCollections" type="StringVec" lcioInType="CalorimeterHit">LCAL </parameter>
-  <!--ECal Collection SimCaloHit Names-->
-  <parameter name="ECalCollectionsSimCaloHit" type="StringVec">EcalBarrelSiliconCollection EcalEndcapSiliconCollection  EcalEndcapRingCollection </parameter>
-  <!--HCal Barrel Collection SimCaloHit Names-->
-  <parameter name="HCalBarrelCollectionsSimCaloHit" type="StringVec"> HcalBarrelRegCollection </parameter>
-  <!--HCal Endcap Collection SimCaloHit Names-->
-  <parameter name="HCalEndCapCollectionsSimCaloHit" type="StringVec"> HcalEndCapsCollection </parameter>
-  <!--HCal Other/Ring Collection SimCaloHit Names-->
-  <parameter name="HCalOtherCollectionsSimCaloHit" type="StringVec"> HcalEndCapRingsCollection</parameter>
-  <!--Set the debug print level-->
-  <parameter name="Printing" type="int"> 0 </parameter>
-  <!--Output root file name-->
-  <parameter name="RootFile" type="string">""" + key + """PfoAnalysisRootFile</parameter>
-</processor>"""
+  <processor name="MyPfoAnalysis""" + key + """" type="PfoAnalysis">
+    <!--PfoAnalysis analyses output of PandoraPFANew-->
+    <!--Names of input pfo collection-->
+    <parameter name="PfoCollection" type="string" lcioInType="ReconstructedParticle">PandoraPFOs""" + key + """ </parameter>
+    <!--Names of mc particle collection-->
+    <parameter name="MCParticleCollection" type="string" lcioInType="MCParticle">MCParticle </parameter>
+    <!-- Turn on calibration helper information-->
+    <parameter name="CollectCalibrationDetails" type="int"> 1 </parameter>
+    <!--ECal Collection ADC Names-->
+    <parameter name="ECalCollectionsSimCaloHit" type="StringVec" lcioInType="SimCalorimeterHit">EcalBarrelCollection EcalEndcapsCollection  EcalEndcapRingCollection</parameter>
+    <parameter name="ECalCollections" type="StringVec" lcioInType="CalorimeterHit">EcalBarrelCollectionRec EcalBarrelCollectionGapHits EcalEndcapsCollectionRec EcalEndcapsCollectionGapHits EcalEndcapRingCollectionRec</parameter>
+    <!--Name of the ECAL barrel collection used to form clusters-->
+    <parameter name="ECalBarrelCollections" type="StringVec" lcioInType="CalorimeterHit">EcalBarrelCollectionRec EcalBarrelCollectionGapHits</parameter>
+    <!--Name of the ECAL EndCap collection used to form clusters-->
+    <parameter name="ECalEndcapCollections" type="StringVec" lcioInType="CalorimeterHit">EcalEndcapsCollectionRec EcalEndcapsCollectionGapHits EcalEndcapRingCollectionRec</parameter>
+    <!--HCal Collection ADC Names-->
+    <parameter name="HCalCollectionsSimCaloHit" type="StringVec" lcioInType="SimCalorimeterHit">HcalBarrelRegCollection HcalEndcapsCollection HcalEndcapRingCollection</parameter>
+    <!--Name of the HCAL barrel collection used to form clusters-->
+    <parameter name="HCalBarrelCollectionsSimCaloHit" type="StringVec" lcioInType="SimCalorimeterHit">HcalBarrelRegCollection</parameter>
+    <!--Name of the HCAL EndCap collection used to form clusters-->
+    <parameter name="HCalEndCapCollectionsSimCaloHit" type="StringVec" lcioInType="SimCalorimeterHit">HcalEndcapsCollection</parameter>
+    <!--Name of the HCAL EndCap collection used to form clusters-->
+    <parameter name="HCalOtherCollectionsSimCaloHit" type="StringVec" lcioInType="SimCalorimeterHit">HcalEndcapRingCollection</parameter>
+    <!--Name of the HCAL collection used to form clusters-->
+    <parameter name="HCalCollections" type="StringVec" lcioInType="CalorimeterHit">HcalBarrelCollectionRec HcalEndcapsCollectionRec HcalEndcapRingCollectionRec </parameter>
+    <!--Name of the MUON collection used to form clusters-->
+    <parameter name="MuonCollections" type="StringVec" lcioInType="CalorimeterHit">MUON </parameter>
+    <!--Name of the BCAL collection used to form clusters-->
+    <parameter name="BCalCollections" type="StringVec" lcioInType="CalorimeterHit">BCAL</parameter>
+    <!--Name of the LHCAL collection used to form clusters-->
+    <parameter name="LHCalCollections" type="StringVec" lcioInType="CalorimeterHit">LHCAL</parameter>
+    <!--Name of the LCAL collection used to form clusters-->
+    <parameter name="LCalCollections" type="StringVec" lcioInType="CalorimeterHit">LCAL</parameter>
+    <!--Set the debug print level-->
+    <parameter name="Printing" type="int">0 </parameter>
+    <!--Name of the output root file-->
+    <parameter name="RootFile" type="string">""" + key + """PfoAnalysisRootFile</parameter>
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+    <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  </processor>"""
         return pandoraAnalysisTemplate
 
 ### ----------------------------------------------------------------------------------------------------
@@ -643,7 +682,7 @@ class LCPandoraValidationLogic:
 
     def runCondorJobs(self, condorRunList, marlinExecutable):
         self.logger.debug('Running condor jobs.')
-        nQueued = self.nQueuedCondorJobs(marlinExecutable)
+        nQueued = self.nQueuedCondorJobs()
         condorJobFile = 'Job_' + self._RandomString + '.job'
 
         while True:
@@ -653,13 +692,13 @@ class LCPandoraValidationLogic:
             else:
                 for idx, fileToRun in enumerate(condorRunList):
                     nRemaining = len(condorRunList) - idx - 1
-                    nQueued = self.nQueuedCondorJobs(marlinExecutable)
+                    nQueued = self.nQueuedCondorJobs()
                     while nQueued >= self._CondorMaxRuns:
                         subprocess.call(["usleep", "500000"])
-                        nQueued = self.nQueuedCondorJobs(marlinExecutable)
+                        nQueued = self.nQueuedCondorJobs()
 
                     with open(condorJobFile, 'w') as jobFile:
-                        jobString = self.getCondorJobString(marlinExecutable)
+                        jobString = self.getCondorJobString(marlinExecutable, idx)
                         jobString += 'arguments = ' + fileToRun + '\n'
                         jobString += 'queue 1 \n'
                         jobFile.write(jobString)
@@ -679,15 +718,15 @@ class LCPandoraValidationLogic:
 ### Start of getCondorJobString function
 ### ----------------------------------------------------------------------------------------------------
 
-    def getCondorJobString(self, marlinExecutable):
+    def getCondorJobString(self, marlinExecutable, idx):
         jobString  = 'executable              = ' + os.getcwd() + '/' + marlinExecutable + '                         \n'
         jobString += 'initial_dir             = ' + os.getcwd() + '                                                  \n'
         jobString += 'notification            = never                                                                \n'
         jobString += 'Requirements            = (OSTYPE == \"SLC6\")                                                 \n'
         jobString += 'Rank                    = memory                                                               \n'
-        jobString += 'output                  = ' + os.environ['HOME'] + '/CondorLogs/Marlin.out                     \n'
-        jobString += 'error                   = ' + os.environ['HOME'] + '/CondorLogs/Marlin.err                     \n'
-        jobString += 'log                     = ' + os.environ['HOME'] + '/CondorLogs/Marlin.log                     \n'
+        jobString += 'output                  = ' + os.environ['HOME'] + '/CondorLogs/' + marlinExecutable[:-3] + '_' + str(idx) + '.out \n'
+        jobString += 'error                   = ' + os.environ['HOME'] + '/CondorLogs/' + marlinExecutable[:-3] + '_' + str(idx) + '.err \n'
+        jobString += 'log                     = ' + os.environ['HOME'] + '/CondorLogs/' + marlinExecutable[:-3] + '_' + str(idx) + '.log \n'
         jobString += 'environment             = CONDOR_JOB=true                                                      \n'
         jobString += 'Universe                = vanilla                                                              \n'
         jobString += 'getenv                  = false                                                                \n'
@@ -702,10 +741,10 @@ class LCPandoraValidationLogic:
 ### Start of checkCondorJobs function
 ### ----------------------------------------------------------------------------------------------------
 
-    def checkCondorJobs(self, marlinExecutable):
+    def checkCondorJobs(self):
         self.logger.debug('Checking on the running condor jobs.')
         while True: 
-            nActiveJobs = self.nQueuedCondorJobs(marlinExecutable)
+            nActiveJobs = self.nQueuedCondorJobs()
             if (nActiveJobs > 0):
                 time.sleep(10)
             else:
@@ -718,13 +757,13 @@ class LCPandoraValidationLogic:
 ### Start of checkCondorJobs function
 ### ----------------------------------------------------------------------------------------------------
 
-    def nQueuedCondorJobs(self, marlinExecutable):
+    def nQueuedCondorJobs(self):
         self.logger.debug('Checking on the number of running condor jobs.')
-        queueProcess = subprocess.Popen(['condor_q','-w'], stdout=subprocess.PIPE)
+        queueProcess = subprocess.Popen(['condor_q'], stdout=subprocess.PIPE)
         queueOutput = queueProcess.communicate()[0]
-        regex = re.compile(marlinExecutable)
-        queueList = regex.findall(queueOutput)
-        return int(len(queueList))
+        runningJobs = queueOutput.split()[-6]
+        idleJobs = queueOutput.split()[-8]
+        return (int)(runningJobs) + (int)(idleJobs)
 
 ### ----------------------------------------------------------------------------------------------------
 ### End of checkCondorJobs function

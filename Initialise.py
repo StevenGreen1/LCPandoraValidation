@@ -6,32 +6,31 @@ import sys
 # Edit init_ilcsoft.sh
 #########################
 
-releaseMarlinPandora = ''
+releaseDDMarlinPandora = ''
 lines = [line.rstrip('\n') for line in open('init_ilcsoft.sh')]
 newContent = ''
 cwd = os.getcwd()
 for line in lines:
-    if 'MarlinPandora' in line:
-        newline = ''
-        for subline in line.split(':'):
-            if 'export' in subline:
-                newline += 'export MARLIN_DLL="'
-            if 'libPandoraAnalysis' in subline:
+    if 'DDMarlinPandora' in line:
+        start_pt = line.find("\"")
+        end_pt = line.find("\"", start_pt + 1)  # add one to skip the opening "
+        libraries = line[start_pt + 1: end_pt]  # add one to get the quote excluding the ""
+
+        newline = 'export MARLIN_DLL=\"'
+        for library in libraries.split(':'):
+            if 'libPandoraAnalysis' in library:
                 newline += os.path.join(cwd,'LCPandoraAnalysis/lib/libPandoraAnalysis.so:')
-            elif 'libMarlinPandora' in subline:
-                releaseMarlinPandora = subline
-                newline += os.path.join(cwd,'MarlinPandora/lib/libMarlinPandora.so:')
-            elif 'libDDMarlinPandora' in subline:
-                newline += ''
-            elif 'libMarlinDD4hep.so' in subline:
-                newline += ''
-            elif '$MARLIN_DLL' in subline:
-                newline += subline  
+            elif 'libDDMarlinPandora' in library:
+                releaseDDMarlinPandora = library
+                newline += os.path.join(cwd,'DDMarlinPandora/lib/libDDMarlinPandora.so:')
+            elif '$MARLIN_DLL' in library:
+                newline += library  
             else:
-                newline += subline + ':'
+                newline += library + ':'
+        newline += '\"'
         line = newline
     newContent += line + '\n'
-releaseMarlinPandoraScriptsFolder = os.path.join(os.path.dirname(releaseMarlinPandora),'../scripts')
+releaseDDMarlinPandoraScriptsFolder = os.path.join(os.path.dirname(releaseDDMarlinPandora),'../scripts')
 
 newInitFile = open("init_ilcsoft_local.sh", "w")
 newInitFile.write(newContent)
@@ -48,12 +47,10 @@ for line in lines:
         line = """MARK_AS_ADVANCED( ILC_HOME )
 SET( LOCAL_ILC_HOME """ + cwdString + """ CACHE PATH "Path to Local ILC Software" FORCE)
 MARK_AS_ADVANCED( LOCAL_ILC_HOME )"""
-    elif 'DD' in line:
-        continue
     elif 'PandoraAnalysis' in line:
         line = '        ${LOCAL_ILC_HOME}/LCPandoraAnalysis;'
-    elif 'MarlinPandora' in line:
-        line = '        ${LOCAL_ILC_HOME}/MarlinPandora;'
+    elif 'DDMarlinPandora' in line:
+        line = '        ${LOCAL_ILC_HOME}/DDMarlinPandora;'
     elif 'PandoraPFA' in line:
         line = '        ${LOCAL_ILC_HOME}/PandoraPFA;'
 
