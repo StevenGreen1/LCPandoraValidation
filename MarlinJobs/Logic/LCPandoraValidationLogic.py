@@ -204,9 +204,10 @@ class LCPandoraValidationLogic:
         self.logger.debug('Preparing Z_uds steering files.')
 
 #        for energy in [91,200,360,500]:
-        for energy in [91]:
+        for energy in [20]:
             counter = 0
-            jobName = 'Z_uds_' + str(energy) + '_GeV'
+            #jobName = 'Z_uds_' + str(energy) + '_GeV'
+            jobName = 'kaon0L_' + str(energy) + '_GeV'
             activeSlcioFormat = self._SlcioFormat
             activeSlcioFormat = re.sub('ENERGY',str(energy),activeSlcioFormat)
 
@@ -563,6 +564,7 @@ class LCPandoraValidationLogic:
     <parameter name="V0VertexCollections" type="StringVec">V0Vertices</parameter>
     <parameter name="ClusterCollectionName" type="String">PandoraClusters""" + key + """</parameter>
     <parameter name="PFOCollectionName" type="String">PandoraPFOs""" + key + """</parameter>
+    <parameter name="StartVertexCollectionName" type="String">StartVertices""" + key + """</parameter>
     <!-- Calibration constants -->
     <parameter name="ECalToMipCalibration">149.254</parameter>
     <parameter name="HCalToMipCalibration">35.3357</parameter>
