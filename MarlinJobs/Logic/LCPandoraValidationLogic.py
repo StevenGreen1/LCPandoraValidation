@@ -56,6 +56,7 @@ class LCPandoraValidationLogic:
         self._SlcioFormat = slcioFormat
         self._SlcioPath = slcioPath
         self._SlcioFiles = self.getSlcioFiles()
+        print self._SlcioFiles
 
         'Gear File'
         if not os.path.isfile(gearFile):
@@ -68,9 +69,9 @@ class LCPandoraValidationLogic:
         'Pandora Settings File'
         pandoraSettingsRelease = {}
         pandoraSettingsRelease['Default'] = os.path.join(cwd, 'PandoraSettings/Release/PandoraSettingsDefault.xml')
-        pandoraSettingsRelease['PerfectPhoton'] = os.path.join(cwd, 'PandoraSettings/Release/PandoraSettingsPerfectPhoton.xml')
-        pandoraSettingsRelease['PerfectPhotonNeutronK0L'] = os.path.join(cwd, 'PandoraSettings/Release/PandoraSettingsPerfectPhotonNeutronK0L.xml')
-        pandoraSettingsRelease['PerfectPFA'] = os.path.join(cwd, 'PandoraSettings/Release/PandoraSettingsPerfectPFA.xml')
+#        pandoraSettingsRelease['PerfectPhoton'] = os.path.join(cwd, 'PandoraSettings/Release/PandoraSettingsPerfectPhoton.xml')
+#        pandoraSettingsRelease['PerfectPhotonNeutronK0L'] = os.path.join(cwd, 'PandoraSettings/Release/PandoraSettingsPerfectPhotonNeutronK0L.xml')
+#        pandoraSettingsRelease['PerfectPFA'] = os.path.join(cwd, 'PandoraSettings/Release/PandoraSettingsPerfectPFA.xml')
         self._PandoraSettingsFileRelease = pandoraSettingsRelease
 
         pandoraSettingsLocal = {}
@@ -168,7 +169,7 @@ class LCPandoraValidationLogic:
     def runPandoras(self):
         self.prepareSteeringFiles()
         self.runCondorJobs(self._CondorRunListRelease, self._MarlinExecutableRelease)
-        self.runCondorJobs(self._CondorRunListLocal, self._MarlinExecutableLocal)
+#        self.runCondorJobs(self._CondorRunListLocal, self._MarlinExecutableLocal)
         self.checkCondorJobs()
 
 ### ----------------------------------------------------------------------------------------------------
@@ -203,11 +204,11 @@ class LCPandoraValidationLogic:
     def prepareSteeringFiles(self):
         self.logger.debug('Preparing Z_uds steering files.')
 
-#        for energy in [91,200,360,500]:
-        for energy in [20]:
+        for energy in [91,200,360,500]:
+#        for energy in [20]:
             counter = 0
-            #jobName = 'Z_uds_' + str(energy) + '_GeV'
-            jobName = 'kaon0L_' + str(energy) + '_GeV'
+            jobName = 'Z_uds_' + str(energy) + '_GeV'
+#            jobName = 'kaon0L_' + str(energy) + '_GeV'
             activeSlcioFormat = self._SlcioFormat
             activeSlcioFormat = re.sub('ENERGY',str(energy),activeSlcioFormat)
 
@@ -543,7 +544,6 @@ class LCPandoraValidationLogic:
         marlinPandoraTemplate = ''
         for key, value in pandoraSettingsFile.iteritems():
             marlinPandoraTemplate += """
-
   <processor name="MyDDMarlinPandora""" + key + """" type="DDPandoraPFANewProcessor">
     <!--Track cut on distance from BarrelTracker inner r to id whether track can form pfo-->
     <parameter name="MaxBarrelTrackerInnerRDistance" type="float">105.0 </parameter>
@@ -565,6 +565,7 @@ class LCPandoraValidationLogic:
     <parameter name="ClusterCollectionName" type="String">PandoraClusters""" + key + """</parameter>
     <parameter name="PFOCollectionName" type="String">PandoraPFOs""" + key + """</parameter>
     <parameter name="StartVertexCollectionName" type="String">StartVertices""" + key + """</parameter>
+
     <!-- Calibration constants -->
     <parameter name="ECalToMipCalibration">149.254</parameter>
     <parameter name="HCalToMipCalibration">35.3357</parameter>
@@ -607,7 +608,6 @@ class LCPandoraValidationLogic:
     <parameter name="TrackCreatorName" type="string">DDTrackCreatorILD </parameter>
     <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> SILENT </parameter>
   </processor>"""
-
 #  <parameter name="ECalToMipCalibration" type="float">""" + str(self._ECalGeVToMIP) + """</parameter>
 #  <parameter name="HCalToMipCalibration" type="float">""" + str(self._HCalGeVToMIP) + """</parameter>
 #  <parameter name="ECalMipThreshold" type="float">""" + str(self._ECalMIPThresholdPandora) + """</parameter>

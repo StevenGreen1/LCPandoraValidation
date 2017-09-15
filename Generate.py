@@ -26,10 +26,11 @@ if not os.path.exists(pandoraSettingsReleaseFolder):
     os.makedirs(pandoraSettingsReleaseFolder)
 
 standardConfigFolder = os.path.join(cwd, 'ILDConfig/StandardConfig/lcgeo_current/')
-os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsDefault.xml') + ' ' + pandoraSettingsReleaseFolder)
-os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhoton.xml') + ' ' + pandoraSettingsReleaseFolder)
-os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhotonNeutronK0L.xml') + ' ' + pandoraSettingsReleaseFolder)
-os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPFA.xml') + ' ' + pandoraSettingsReleaseFolder)
+#~os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsDefault.xml') + ' ' + pandoraSettingsReleaseFolder)
+os.system('cp /usera/sg568/from_Remi/DefaultSteeringForDD4HEP/PandoraSettingsDefault.xml ' + pandoraSettingsReleaseFolder)
+#os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhoton.xml') + ' ' + pandoraSettingsReleaseFolder)
+#os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhotonNeutronK0L.xml') + ' ' + pandoraSettingsReleaseFolder)
+#os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPFA.xml') + ' ' + pandoraSettingsReleaseFolder)
 os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraLikelihoodData9EBin.xml') + ' ' + pandoraSettingsReleaseFolder)
 
 releasePandoraSettingsDefault = os.path.join(pandoraSettingsReleaseFolder, 'PandoraSettingsDefault.xml')
@@ -70,9 +71,9 @@ if not os.path.exists(pandoraSettingsLocalFolder):
     os.makedirs(pandoraSettingsLocalFolder)
 
 os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsDefault.xml') + ' ' + pandoraSettingsLocalFolder)
-os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhoton.xml') + ' ' + pandoraSettingsLocalFolder)
-os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhotonNeutronK0L.xml') + ' ' + pandoraSettingsLocalFolder)
-os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPFA.xml') + ' ' + pandoraSettingsLocalFolder)
+#os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhoton.xml') + ' ' + pandoraSettingsLocalFolder)
+#os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPhotonNeutronK0L.xml') + ' ' + pandoraSettingsLocalFolder)
+#os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraSettingsPerfectPFA.xml') + ' ' + pandoraSettingsLocalFolder)
 os.system('cp ' + os.path.join(standardConfigFolder, 'PandoraLikelihoodData9EBin.xml') + ' ' + pandoraSettingsLocalFolder)
 
 localPandoraSettingsDefault = os.path.join(pandoraSettingsLocalFolder, 'PandoraSettingsDefault.xml')
@@ -123,7 +124,8 @@ os.system('chmod u+x MarlinJobs/Templates/MarlinRelease.sh')
 #########################
 # Make MarlinTemplate.xml
 #########################
-standardConfigXml = os.path.join(standardConfigFolder, 'bbudsc_3evt_stdreco_dd4hep.xml')
+#~standardConfigXml = os.path.join(standardConfigFolder, 'bbudsc_3evt_stdreco_dd4hep.xml')
+standardConfigXml = '/usera/sg568/from_Remi/DefaultSteeringForDD4HEP/bbudsc_3evt_stdreco_dd4hep.xml'
 
 newContent = ''
 lines = [line.rstrip('\n') for line in open(standardConfigXml)]
@@ -139,10 +141,10 @@ for line in lines:
         line = 'PandoraHeader\n'
     elif 'processor name' in line and 'PfoAnalysis' in line and '/>' in line:
         line = ''
-    elif 'processor name' in line and 'ILDCaloDigi' in line and '/>' in line:
-        line = 'DigitiserHeader\n'
-    elif 'processor name' in line and 'SimpleMuonDigi' in line and '/>' in line:
-        line = 'SimpleMuonDigiHeader\n'
+#    elif 'processor name' in line and 'ILDCaloDigi' in line and '/>' in line:
+#        line = 'DigitiserHeader\n'
+#    elif 'processor name' in line and 'SimpleMuonDigi' in line and '/>' in line:
+#        line = 'SimpleMuonDigiHeader\n'
     elif 'parameter name' in line and 'GearXMLFile' in line and '/>' in line:
         line = '      <parameter name="GearXMLFile" value="GearFile"/>\n'
     elif 'parameter name' in line and 'MaxRecordNumber' in line and '/>' in line:
@@ -154,12 +156,12 @@ for line in lines:
             delete = True
         elif 'processor name' in line and 'PfoAnalysis' in line and '/>' not in line:
             delete = True
-        elif 'processor name' in line and 'ILDCaloDigi' in line and '/>' not in line:
-            newContent += 'DigitiserImplementation\n'
-            delete = True
-        elif 'processor name' in line and 'SimpleMuonDigi' in line and '/>' not in line:
-            newContent += 'SimpleMuonDigiImplementation\n'
-            delete = True
+#        elif 'processor name' in line and 'ILDCaloDigi' in line and '/>' not in line:
+#            newContent += 'DigitiserImplementation\n'
+#            delete = True
+#        elif 'processor name' in line and 'SimpleMuonDigi' in line and '/>' not in line:
+#            newContent += 'SimpleMuonDigiImplementation\n'
+#            delete = True
         elif delete and '</processor>' in line:
             line = ''
             delete = False
