@@ -1,10 +1,10 @@
 
 from Logic.LCPandoraValidationLogic import * 
 
-slcioFormat = 'ILD_o1_v06_GJN38_udsENERGY_(.*?).slcio'
-slcioPath = '/r04/lc/sg568/HCAL_Optimisation_Studies/Slcio/GJN38/'
-gearFile = '/r04/lc/sg568/HCAL_Optimisation_Studies/GridSandboxes/GJN38_OutputSandbox/ILD_o1_v06_Detector_Model_38.gear'
-outputPath = '/r06/lc/sg568/LCValidationPandora/ilcsoft_v01-17-10-vs-master-11-10-16/'
+slcioFormat = 'Z_uds_ENERGY_GeV_(.*?).slcio'
+slcioPath = '/r04/lc/sg568/Validation/Simulation/DD4HEP/v01-19-04/CLIC_o3_v13/'
+gearFile = '/r04/lc/sg568/Validation/Simulation/DD4HEP/v01-19-04/CLIC_o3_v13/gear_CLIC_o3_v13.xml'
+outputPath = '/r04/lc/sg568/Validation/Reconstruction/DD4HEP/v01-19-04/CLIC_o3_v13/'
 
 LCPandoraValidationLogic(slcioFormat, slcioPath, gearFile, outputPath)
 
