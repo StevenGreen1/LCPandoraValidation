@@ -9,10 +9,13 @@ class LCPandoraValidationLogic:
 ### Start of constructor
 ### ----------------------------------------------------------------------------------------------------
 
-    def _init_(self, slcioFormat, slcioPath, gearFile, outputPath):
+    def __init__(self, slcioFormat, slcioPath, gearFile, outputPath):
         cwd = os.getcwd()
 
         self._OutputPath = outputPath
+
+        self._nEvtsPerLcioFile = 1000 
+        self._nEvtsPerJob = 100
 
         'Root File Info'
         self._RootFileFolder = os.path.join(self._OutputPath, 'RootFiles') 
@@ -38,7 +41,7 @@ class LCPandoraValidationLogic:
         logFullPath = 'Validation.log'
         if os.path.isfile(logFullPath):
             os.remove(logFullPath)
-        self.logger = logging.getLogger(_name_)
+        self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         handler = logging.FileHandler(logFullPath)
         handler.setLevel(logging.INFO)
@@ -92,7 +95,7 @@ class LCPandoraValidationLogic:
     def runPandoras(self):
         self.prepareSteeringFiles()
         self.runCondorJobs(self._CondorRunList, self._MarlinExecutable)
-        self.checkCondorJobs(self._MarlinExecutable)
+#        self.checkCondorJobs(self._MarlinExecutable)
 
 ### ----------------------------------------------------------------------------------------------------
 ### End of runPandoras function
@@ -127,7 +130,7 @@ class LCPandoraValidationLogic:
         self.logger.debug('Preparing Z_uds steering files.')
 
 #        for energy in [91,200,360,500]:
-        for energy in [91,200]:
+        for energy in [91, 200, 360]:
             counter = 0
             jobName = 'Z_uds_' + str(energy) + '_GeV'
             activeSlcioFormat = self._SlcioFormat
@@ -157,7 +160,6 @@ class LCPandoraValidationLogic:
                 sys.exit()
 
             for nfiles in range(len(slcioFiles)):
-                marlinTemplate = baseContent
                 nextFile = slcioFiles.pop(0)
                 matchObj = re.match(activeSlcioFormat, nextFile, re.M|re.I)
 
@@ -165,44 +167,48 @@ class LCPandoraValidationLogic:
                 if not matchObj:
                     continue
 
-                counter += 1
+                for startEvent in xrange(0, self._nEvtsPerLcioFile, self._nEvtsPerJob):
+                    marlinTemplate = baseContent
+                    counter += 1
 
-                slcioFileName = os.path.join(self._SlcioPath,nextFile)
+                    slcioFileName = os.path.join(self._SlcioPath,nextFile)
 
-                ###################################
-                # Create the Marlin Steering Files
-                ###################################
-                xmlFileName = 'Validating_Pandora_' + jobName + '_Job_Number_' + str(counter) + '.xml'
-                xmlFullPath = os.path.join(self._MarlinXmlPath, xmlFileName)
+                    ###################################
+                    # Create the Marlin Steering Files
+                    ###################################
+                    xmlFileName = 'Validating_Pandora_' + jobName + '_Job_Number_' + str(counter) + '.xml'
+                    xmlFullPath = os.path.join(self._MarlinXmlPath, xmlFileName)
 
-                marlinTemplate = re.sub('LcioInputFile',slcioFileName,marlinTemplate)                                 # Slcio File
-                marlinTemplate = re.sub('GearFile',self._GearFile,marlinTemplate)                                     # Gear File
+                    marlinTemplate = re.sub('LcioInputFile',slcioFileName,marlinTemplate)                                 # Slcio File
+                    marlinTemplate = re.sub('GearFile',self._GearFile,marlinTemplate)                                     # Gear File
+                    marlinTemplate = re.sub('EventsPerJob',str(self._nEvtsPerJob),marlinTemplate)                         # NEvts to process
+                    marlinTemplate = re.sub('NEvtsToSkip',str(startEvent),marlinTemplate)                                 # Start event
 
-                pandoraSettingsFullPath = {}
-                rootFileFullPath = {}
-                for key, value in self._PandoraSettingsFile.iteritems():
-                    pandoraSettingsFileName = 'PandoraSettings' + key + '_' + jobName + '_Job_Number_' + str(counter) + '.xml'
-                    pandoraSettingsFullPath[key] = os.path.join(self._PandoraSettingsPath, pandoraSettingsFileName)
-                    rootFileFileName = 'Validating_PandoraSettings' + key + '_' + jobName + '_Job_Number_' + str(counter) + '.root'
-                    rootFileFullPath[key] = os.path.join(self._RootFileFolder, rootFileFileName)
+                    pandoraSettingsFullPath = {}
+                    rootFileFullPath = {}
+                    for key, value in self._PandoraSettingsFile.iteritems():
+                        pandoraSettingsFileName = 'PandoraSettings' + key + '_' + jobName + '_Job_Number_' + str(counter) + '.xml'
+                        pandoraSettingsFullPath[key] = os.path.join(self._PandoraSettingsPath, pandoraSettingsFileName)
+                        rootFileFileName = 'Validating_PandoraSettings' + key + '_' + jobName + '_Job_Number_' + str(counter) + '.root'
+                        rootFileFullPath[key] = os.path.join(self._RootFileFolder, rootFileFileName)
 
-                marlinTemplate = self.writeXmlFile(marlinTemplate, pandoraSettingsFullPath)             # Calibration Parameters
-                for key, value in rootFileFullPath.iteritems():
-                    marlinTemplate = re.sub(key + 'PfoAnalysisRootFile', value, marlinTemplate)         # PfoAnalysis Root File
+                    marlinTemplate = self.writeXmlFile(marlinTemplate, pandoraSettingsFullPath)             # Calibration Parameters
+                    for key, value in rootFileFullPath.iteritems():
+                        marlinTemplate = re.sub(key + 'PfoAnalysisRootFile', value, marlinTemplate)         # PfoAnalysis Root File
 
-                file = open(xmlFullPath,'w')
-                file.write(marlinTemplate)
-                file.close()
+                    file = open(xmlFullPath,'w')
+                    file.write(marlinTemplate)
+                    file.close()
 
-                ###################################
-                # Create the Pandora Settings Files
-                ###################################
-                for key, value in basePandoraSettingsContent.iteritems():
-                    outputEventPndrFileName = 'Validating_PandoraSettings' + key + '_Event_' + jobName + '_Job_Number_' + str(counter) + '.xml'
-                    outputGeometryPndrFileName = 'Validating_PandoraSettings' + key + '_Geometry_' + jobName + '_Job_Number_' + str(counter) + '.xml'
-                    outputEventPndrFullPath = os.path.join(self._PndrPath, outputEventPndrFileName)
-                    outputGeometryPndrFullPath = os.path.join(self._PndrPath, outputGeometryPndrFileName)
-                    eventWritingString = """
+                    ###################################
+                    # Create the Pandora Settings Files
+                    ###################################
+                    for key, value in basePandoraSettingsContent.iteritems():
+                        outputEventPndrFileName = 'Validating_PandoraSettings' + key + '_Event_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
+                        outputGeometryPndrFileName = 'Validating_PandoraSettings' + key + '_Geometry_' + jobName + '_Job_Number_' + str(counter) + '.pndr'
+                        outputEventPndrFullPath = os.path.join(self._PndrPath, outputEventPndrFileName)
+                        outputGeometryPndrFullPath = os.path.join(self._PndrPath, outputGeometryPndrFileName)
+                        eventWritingString = """
     <algorithm type = "EventWriting">
         <EventFileName>""" + outputEventPndrFullPath + """</EventFileName>
         <GeometryFileName>""" + outputGeometryPndrFullPath + """</GeometryFileName>
@@ -212,12 +218,12 @@ class LCPandoraValidationLogic:
         <ShouldOverwriteGeometryFile>true</ShouldOverwriteGeometryFile>
     </algorithm>
 """
-                    content = re.sub('<!-- ALGORITHM SETTINGS -->', '<!-- ALGORITHM SETTINGS --> \n' + eventWritingString, value)
-                    pandoraSettingsFile = open(pandoraSettingsFullPath[key], 'w')
-                    pandoraSettingsFile.writelines(content)
-                    pandoraSettingsFile.close()
+                        content = re.sub('<!-- ALGORITHM SETTINGS -->', '<!-- ALGORITHM SETTINGS --> \n' + eventWritingString, value)
+                        pandoraSettingsFile = open(pandoraSettingsFullPath[key], 'w')
+                        pandoraSettingsFile.writelines(content)
+                        pandoraSettingsFile.close()
 
-                self._CondorRunList.append(xmlFullPath)
+                    self._CondorRunList.append(xmlFullPath)
 
         self.logger.debug('The current list of xml files to process is: ')
         self.logger.debug(self._CondorRunList)
